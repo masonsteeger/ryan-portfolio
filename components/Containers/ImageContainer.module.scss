@@ -1,0 +1,25 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative !important;
+  margin: 10px;
+  max-width: 400px;
+  border: 6px solid var(--color-secondary);
+  border-radius: var(--border-radius);
+  background: linear-gradient(
+    180deg,
+    var(--color-secondary) 0%,
+    rgba(0, 0, 0, 0.8) 50%,
+    var(--color-secondary) 100%
+  );
+}
+
+.image {
+  object-fit: contain;
+  width: 100% !important;
+  position: relative !important;
+  height: unset !important;
+  box-sizing: border-box;
+  border-radius: 0px;
+}

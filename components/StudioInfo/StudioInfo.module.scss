@@ -1,0 +1,22 @@
+.outer-container {
+  width: 80%;
+  text-align: center;
+}
+
+.link-container {
+  position: relative;
+  left: -40%;
+  padding: 16px;
+  text-align: right;
+  border-radius: 30px;
+  width: 80%;
+  background-color: white;
+  border: 3px solid var(--color-accent);
+}
+
+.link {
+  font-size: 16px;
+  margin: 0px;
+  color: black;
+  text-decoration: underline;
+}

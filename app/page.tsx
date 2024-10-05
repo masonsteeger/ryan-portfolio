@@ -1,32 +1,68 @@
-import TextContainer from "@/components/Containers/TextContainer";
+"use client";
+import Container from "@/components/Containers/Container";
 import Image from "next/image";
+import classes from "./Home.module.scss";
+import StudioInfo from "@/components/StudioInfo/StudioInfo";
+import ImageContainer from "@/components/Containers/ImageContainer";
 
 export default function Home() {
   return (
-    <div className='page-container'>
+    <>
       <h1 className='page-title'>InkBySilverEye</h1>
-      <TextContainer>
+      <Container>
         <div style={{ marginRight: "auto", padding: "12px" }}>
           <h1>Hi, I&#39;m Ryan Leach</h1>
           <p>
-            I&#39;m a tattoo artist at Midgard Tattoo in Dallas, Texas. I enjoy
-            doing mandalas, geometric patterns, and other styles! Other stuff
-            can go here for filling out a bio lol.
+            I am a passionate tattoo artist with 5 years of experience. From a
+            young age, art inspired me, and I always knew it would shape my
+            career. I found tattooing during a pivotal moment in my life,
+            serving as an escape and a way to transform people's ideas into
+            unique self expressive art. I specialize in geometric designs but
+            also enjoy floral, ornamental, and black and grey realism tattoos.
+            Tattooing has profoundly changed my life, and the friendships and
+            artist knowledge I've made and learned are among my most cherished
+            achievements. I am happily married to my best friend and biggest
+            supporter. We are parents to the most beautiful two-year-old
+            daughter, and happy furry family of 2 cats and a mini Aussie. In
+            addition to tattooing, I pursue glass engraving, painting, home
+            décor refinishing and creating digital art for clothing. I spend
+            most of my time enjoying it with family and attending music
+            festivals.
           </p>
         </div>
-        <Image
-          src={"/static/images/head-shot.jpg"}
-          alt='Ryan Leach Tattoo'
-          width={500}
-          height={500}
-          style={{
-            width: "auto",
-            height: "100%",
-            maxWidth: "40%",
-            marginLeft: "12px",
-          }}
+        <div className={classes["image-container"]}>
+          <Image
+            src={"/static/images/head-shot.jpg"}
+            alt='Ryan Leach Headshot'
+            width={0}
+            height={0}
+            sizes='100vw'
+            style={{ width: "auto", height: "100%", maxHeight: "500px" }}
+          />
+        </div>
+      </Container>
+      <br />
+      <a href='/booking' style={{ textAlign: "center" }}>
+        <h2>Schedule an Appointment</h2>
+        <ImageContainer
+          src='/static/images/action-shot.jpg'
+          alt='Action Shot'
         />
-      </TextContainer>
-    </div>
+      </a>
+
+      <br />
+      <StudioInfo />
+      <br />
+      <StudioInfo />
+      <br />
+      <StudioInfo />
+      <br />
+      <StudioInfo />
+      <br />
+      <StudioInfo />
+      <br />
+      <StudioInfo />
+      <br />
+    </>
   );
 }

@@ -6,7 +6,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 10%;
+  padding: 0 5%;
   position: fixed;
   z-index: 1000;
   ul {
@@ -31,15 +31,6 @@
     text-decoration: underline var(--main-accent-color);
     text-decoration-thickness: 3px;
   }
-}
-
-.headerAnimationShow {
-  transform: translateY(0);
-  transition: transform 0.225s ease-in-out;
-}
-.headerAnimationHide {
-  transform: translateY(-100%);
-  transition: transform 0.225s ease-in-out;
 }
 
 @media only screen and (max-width: 768px) {
@@ -90,6 +81,15 @@
   .mobileMenuOpen {
     transform: translateY(96px);
   }
+}
+
+.headerAnimationShow {
+  transform: translateY(-70);
+  transition: transform 0.225s ease-in-out;
+}
+.headerAnimationHide {
+  transform: translateY(-100%);
+  transition: transform 0.225s ease-in-out;
 }
 
 /*!

@@ -6,22 +6,27 @@ const useScrollPosition = () => {
 
   useEffect(() => {
     const updatePosition = () => {
+      const container = document.getElementById("site-container");
+      if (!container) return;
       const previous = lastScrollTop.current;
-      lastScrollTop.current = window.scrollY;
-      if (window.scrollY < 96) {
+      lastScrollTop.current = container.scrollTop;
+      if (container.scrollTop < 96) {
         setShow(true);
+      } else if (container.scrollTop > previous) {
+        setShow(false);
       } else {
-        if (window.scrollY > previous) {
-          setShow(false);
-        } else {
-          setShow(true);
-        }
+        setShow(true);
       }
     };
 
-    window.addEventListener("scroll", updatePosition);
+    document
+      .getElementById("site-container")
+      ?.addEventListener("scroll", updatePosition);
 
-    return () => window.removeEventListener("scroll", updatePosition);
+    return () =>
+      document
+        .getElementById("site-container")
+        ?.removeEventListener("scroll", updatePosition);
   }, []);
 
   return { show };

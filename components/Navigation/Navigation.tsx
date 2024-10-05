@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import classes from "./Navigation.module.scss";
 import { useMemo, useState } from "react";
 import { useWindowSize } from "@/hooks/useScreenSize";
@@ -18,6 +19,9 @@ export default function MainNavigation() {
           <Link href='/gallery'>
             <li onClick={() => setMenuOpen(false)}>Gallery</li>
           </Link>
+          <Link href='/booking'>
+            <li onClick={() => setMenuOpen(false)}>Booking</li>
+          </Link>
           <Link href='/contact'>
             <li onClick={() => setMenuOpen(false)}>Contact</li>
           </Link>
@@ -32,13 +36,27 @@ export default function MainNavigation() {
     []
   );
 
+  console.log(show);
+
   return (
     <>
       <header
         className={`${classes.header} ${
-          show ? classes.headerAnimationShow : classes.headerAnimationHide
+          show || menuOpen
+            ? classes.headerAnimationShow
+            : classes.headerAnimationHide
         }`}>
-        <Link href='/'>Home</Link>
+        <Link href='/'>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <Image
+              src='/static/images/logo-icon.jpg'
+              alt='Ryan Leach Logo'
+              width={75}
+              height={75}
+            />
+            Ryan Leach
+          </div>
+        </Link>
         {screenSize.width > 768 ? (
           links
         ) : (
@@ -58,10 +76,13 @@ export default function MainNavigation() {
       </header>
       {screenSize.width <= 768 && (
         <div
-          className={[
-            classes.mobileMenu,
-            menuOpen ? classes.mobileMenuOpen : "",
-          ].join(" ")}>
+          className={`${classes.mobileMenu} ${
+            menuOpen
+              ? classes.mobileMenuOpen
+              : show
+              ? classes.headerAnimationShow
+              : classes.headerAnimationHide
+          }`}>
           {links}
         </div>
       )}
