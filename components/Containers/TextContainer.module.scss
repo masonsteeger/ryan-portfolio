@@ -1,0 +1,9 @@
+.container {
+  background: #ffffffa0;
+  border: var(--color-accent) 3px solid;
+  border-radius: var(--border-radius);
+  width: 80%;
+  margin: 0 auto;
+  display: flex;
+  max-width: 1000px;
+}
