@@ -147,7 +147,7 @@ img {
 
   display: grid;
   grid-template-rows: var(--size-20) 1fr 20px;
-  align-items: center;
+  align-items: flex-start;
   justify-items: center;
   min-height: 100svh;
   margin-top: 108px;

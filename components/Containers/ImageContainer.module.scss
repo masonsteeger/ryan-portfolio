@@ -5,13 +5,13 @@
   position: relative !important;
   margin: 10px;
   max-width: 400px;
-  border: 6px solid var(--color-secondary);
+  border: 6px solid var(--color-primary);
   border-radius: var(--border-radius);
   background: linear-gradient(
     180deg,
-    var(--color-secondary) 0%,
+    var(--color-primary) 0%,
     rgba(0, 0, 0, 0.8) 50%,
-    var(--color-secondary) 100%
+    var(--color-primary) 100%
   );
 }
 

@@ -1,0 +1,1 @@
+export { getBlobObj } from "./getBlobObj";

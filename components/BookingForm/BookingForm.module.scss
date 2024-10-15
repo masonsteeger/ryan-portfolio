@@ -1,0 +1,35 @@
+.logoContainer {
+  max-height: 350px;
+  max-width: 350px;
+  border-radius: 50%;
+  width: 50%;
+  height: auto;
+  position: relative;
+  background: black;
+  padding: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.imageContainer {
+  width: 40%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative !important;
+  margin: 10px;
+  cursor: pointer;
+}
+
+.image {
+  object-fit: contain;
+  width: 100% !important;
+  position: relative !important;
+  height: unset !important;
+  box-sizing: border-box;
+  border: 6px solid;
+  border-radius: 15px;
+  max-width: 400px;
+  pointer-events: none;
+}

@@ -4,11 +4,11 @@ import { osName } from "react-device-detect";
 import { Map, Marker, Overlay } from "pigeon-maps";
 import Container from "../Containers/Container";
 import classes from "./StudioInfo.module.scss";
+import ContactInfo from "../ContactInfo/ContactInfo";
 
 const StudioInfo = () => {
   return (
     <div className={classes["outer-container"]}>
-      <h1>Studio Info</h1>
       <Container>
         <Map
           mouseEvents={false}
@@ -44,12 +44,13 @@ const StudioInfo = () => {
                 "_blank"
               );
             }}
-            color={"#f4cc3a"}
+            color={"#1fbbea"}
             width={50}
             anchor={[32.9345446314365, -96.83831406623952]}
           />
         </Map>
       </Container>
+      <ContactInfo />
     </div>
   );
 };
