@@ -13,7 +13,7 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-josefinsans), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-image: url("../public/static/images/background-2.jpg");
@@ -21,7 +21,7 @@ body {
   background-size: cover;
   background-repeat: no-repeat;
   background-attachment: scroll;
-  backdrop-filter: brightness(0.25);
+  backdrop-filter: brightness(0.5) blur(3px);
   --color-grey-50: #f4effa;
   --color-grey-100: #dfdbe6;
   --color-grey-200: #b2adb8;
@@ -70,6 +70,10 @@ body {
   --color-secondary: var(--color-secondary-300);
   --color-accent: var(--color-accent-300);
 
+  --contrast-bg-primary: #301982;
+  --contrast-bg-primary-transparent: #301982a5;
+  --contrast-bg-secondary: #006eb2;
+
   --color-success-100: #a2f0bc;
   --color-success-500: #12bd4b;
 
@@ -96,12 +100,12 @@ body {
   --header-font-color-light: var(--color-primary-0);
   --header-font-color-dark: var(--color-secondary-700);
 
-  --paragraph-font-color: #252525;
+  --paragraph-font-color: var(--color-accent-300);
 
   --main-accent-color: var(--color-accent-300);
 
   --border-radius: 6px;
-  color: var(--color-grey-100);
+  color: var(--color-accent-300);
 }
 
 * {
@@ -112,10 +116,14 @@ body {
 
 h1 {
   font-size: var(--size-10);
+  opacity: 0;
+  animation: fadeIn 0.5s ease-in-out forwards;
 }
 
 p {
   font-size: var(--size-5);
+  font-family: var(--font-quicksand), sans-serif;
+  font-weight: 600;
 }
 
 a {
@@ -175,5 +183,14 @@ img {
 
   p {
     font-size: var(--size-4);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

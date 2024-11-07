@@ -1,11 +1,12 @@
 .container {
-  border: var(--color-primary) 3px solid;
+  border: var(--color-primary) 6px solid;
   border-radius: var(--border-radius);
   width: 90%;
   margin: 0 auto;
   display: flex;
   max-width: 1000px;
   min-width: 250px;
+  background-color: #301982a5;
 }
 
 @media screen and (max-width: 1120px) {

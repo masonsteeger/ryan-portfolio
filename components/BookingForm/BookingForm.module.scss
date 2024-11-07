@@ -1,3 +1,8 @@
+.list-container {
+  padding: 0 20px;
+  list-style: square;
+}
+
 .logoContainer {
   max-height: 350px;
   max-width: 350px;
@@ -10,6 +15,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  margin: 36px 0;
 }
 
 .imageContainer {

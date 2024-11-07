@@ -9,9 +9,10 @@
   border-radius: var(--border-radius);
   background: linear-gradient(
     180deg,
-    var(--color-primary) 0%,
-    rgba(0, 0, 0, 0.8) 50%,
-    var(--color-primary) 100%
+    var(--contrast-bg-primary-transparent) 0%,
+    rgba(0, 0, 0, 0.8) 10%,
+    rgba(0, 0, 0, 0.8) 90%,
+    var(--contrast-bg-primary-transparent) 100%
   );
 }
 

@@ -5,11 +5,12 @@ import Image from "next/image";
 type ImageContainerProps = {
   src: string;
   alt: string;
+  style: React.CSSProperties;
 };
 
 const ImageContainer = (props: ImageContainerProps) => {
   return (
-    <div className={classes.container}>
+    <div className={classes.container} style={props.style}>
       <Image
         src={props.src}
         alt={props.alt}

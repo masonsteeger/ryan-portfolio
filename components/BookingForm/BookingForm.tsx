@@ -27,7 +27,7 @@ import Image from "next/image";
 import classes from "./BookingForm.module.scss";
 import { getBlobObj } from "@/utils";
 import { b64FileList, Day, Form } from "@/types";
-import { CircularProgress } from "@mui/material";
+import { CircularProgress, Typography } from "@mui/material";
 import update from "immutability-helper";
 import Container from "../Containers/Container";
 
@@ -286,7 +286,7 @@ export default function BookingForm() {
               </h3>
             </Box>
           </Modal>
-          <Box sx={{ marginBottom: "40px", width: "90%" }}>
+          <Box sx={{ width: "90%" }}>
             <ButtonGroup
               size='large'
               fullWidth
@@ -297,14 +297,14 @@ export default function BookingForm() {
                   setForm(() => ({ ...form, isConsultation: false }))
                 }
                 variant={!form.isConsultation ? "contained" : "outlined"}>
-                Appointment
+                <Typography>Appointment</Typography>
               </Button>
               <Button
                 onClick={() =>
                   setForm(() => ({ ...form, isConsultation: true }))
                 }
                 variant={form.isConsultation ? "contained" : "outlined"}>
-                Consultation
+                <Typography>Consultation</Typography>
               </Button>
             </ButtonGroup>
           </Box>
@@ -341,12 +341,34 @@ export default function BookingForm() {
               <hr style={{ borderColor: "#000000", width: "40%" }} />
             </Stack>
             {form.isConsultation ? (
-              <ul>
-                <li>We put a disclaimer here for a consultation</li>
+              <ul className={classes["list-container"]}>
+                <li>
+                  <b>
+                    This form is not for booking a tattoo but to discuss the
+                    idea and set a later date for the actual tattoo appointment.
+                  </b>
+                </li>
+                <li>
+                  Bring photo references or just have a general idea of the
+                  imagery your wanting to get tattooed and where.
+                </li>
+                <li>For General questions please DM me on Instagram.</li>
               </ul>
             ) : (
-              <ul>
-                <li>We put a disclaimer here for a booking</li>
+              <ul className={classes["list-container"]}>
+                <li>
+                  A 50$ deposit is required to book. This will be deducted from
+                  the price of the tattoo. Please Zelle 4695092115 before
+                  completing this form.
+                </li>
+                <li>
+                  Deposits are non refundable but can be re used to reschedule
+                  if given a minimum of a 48-hour notice.
+                </li>
+                <li>
+                  if you have questions about placement, design or anything else
+                  please message me on Instagram or setup a consultation.
+                </li>
               </ul>
             )}
             <Stack
