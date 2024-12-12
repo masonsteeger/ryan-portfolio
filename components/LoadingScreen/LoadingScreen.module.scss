@@ -1,0 +1,78 @@
+.container {
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #030303;
+  z-index: 10000;
+  animation-name: fadeAway;
+  animation-duration: 1s;
+  animation-delay: 2s;
+  animation-fill-mode: forwards;
+}
+
+@property --p {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+.chart-circle {
+  width: 700px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  --p: 0%; /*fallback*/
+  background: conic-gradient(var(--color-accent) var(--p), #030303 0);
+  position: absolute;
+  margin: auto;
+  animation: circle 1s 0.75s cubic-bezier(0.6, 0.4, 0.4, 0.8) forwards;
+}
+
+.chart-circle::before {
+  position: absolute;
+  inset: 20px;
+  content: "";
+  border-radius: inherit;
+  background: #030303;
+}
+
+.hiddenCircle {
+  background-color: #030303;
+  width: 100%;
+  position: absolute;
+  top: 0px;
+  z-index: -1;
+  animation-name: topToBottom;
+  animation-duration: 5s;
+  animation-delay: 0s;
+  animation-fill-mode: forwards;
+}
+
+@keyframes circle {
+  0% {
+    --p: 0%;
+  }
+  100% {
+    --p: 100%;
+  }
+}
+
+@keyframes fadeAway {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes topToBottom {
+  0% {
+    height: 100%;
+  }
+  100% {
+    height: 0%;
+  }
+}

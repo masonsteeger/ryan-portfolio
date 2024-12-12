@@ -5,7 +5,7 @@ import Image from "next/image";
 type ImageContainerProps = {
   src: string;
   alt: string;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
 };
 
 const ImageContainer = (props: ImageContainerProps) => {

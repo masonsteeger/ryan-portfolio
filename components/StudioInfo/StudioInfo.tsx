@@ -5,10 +5,17 @@ import { Map, Marker, Overlay } from "pigeon-maps";
 import Container from "../Containers/Container";
 import classes from "./StudioInfo.module.scss";
 import ContactInfo from "../ContactInfo/ContactInfo";
+import Stack from "@mui/material/Stack";
 
 const StudioInfo = () => {
   return (
-    <div className={classes["outer-container"]}>
+    <Stack
+      direction='column'
+      alignItems={"center"}
+      sx={{
+        width: "100%",
+        color: "black",
+      }}>
       <Container>
         <Map
           mouseEvents={false}
@@ -51,7 +58,7 @@ const StudioInfo = () => {
         </Map>
       </Container>
       <ContactInfo />
-    </div>
+    </Stack>
   );
 };
 

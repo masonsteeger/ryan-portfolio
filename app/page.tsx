@@ -11,7 +11,7 @@ export default function Home() {
       <h1 className='page-title'>InkBySilverEye</h1>
       <Container>
         <div style={{ marginRight: "auto", padding: "12px" }}>
-          <h1>Hi, I&#39;m Ryan Leach</h1>
+          <h2>Hi, I&#39;m Ryan Leach</h2>
           <p>
             I am a passionate tattoo artist with 5 years of experience. From a
             young age, art inspired me, and I always knew it would shape my
@@ -43,14 +43,14 @@ export default function Home() {
       </Container>
       <br />
       <a href='/booking' style={{ textAlign: "center" }}>
-        <h2>Schedule an Appointment</h2>
+        <h3>Schedule an Appointment</h3>
         <ImageContainer
           src='/static/images/action-shot.jpg'
           alt='Action Shot'
         />
       </a>
       <br />
-      <h1>Contact/Studio Information</h1>
+      <h2>Contact/Studio Information</h2>
       <StudioInfo />
     </>
   );

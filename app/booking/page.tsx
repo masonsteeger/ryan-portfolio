@@ -4,8 +4,12 @@ import React from "react";
 const Booking = () => {
   return (
     <>
-      <h1>Booking</h1>
-      <BookingForm />
+      <div className='page-title'>
+        <h1>Booking</h1>
+      </div>
+      <div className='page-content'>
+        <BookingForm />
+      </div>
     </>
   );
 };

@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Navigation from "@/components/Navigation/Navigation";
 import ClientThemeProvider from "./ClientThemeProvider";
+import LoadingScreen from "@/components/LoadingScreen/LoadingScreen";
 
 const quicksand = localFont({
   src: [
@@ -92,7 +93,8 @@ export default function RootLayout({
         <body className={`${josefinSans.variable} ${quicksand.variable}`}>
           <div id={"site-container"}>
             <Navigation />
-            <div id={"page-content"}>{children}</div>
+            <div id={"page"}>{children}</div>
+            <LoadingScreen />
           </div>
         </body>
       </ClientThemeProvider>

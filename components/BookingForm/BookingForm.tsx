@@ -297,14 +297,14 @@ export default function BookingForm() {
                   setForm(() => ({ ...form, isConsultation: false }))
                 }
                 variant={!form.isConsultation ? "contained" : "outlined"}>
-                <Typography>Appointment</Typography>
+                <Typography sx={{ fontWeight: "600" }}>Appointment</Typography>
               </Button>
               <Button
                 onClick={() =>
                   setForm(() => ({ ...form, isConsultation: true }))
                 }
                 variant={form.isConsultation ? "contained" : "outlined"}>
-                <Typography>Consultation</Typography>
+                <Typography sx={{ fontWeight: "600" }}>Consultation</Typography>
               </Button>
             </ButtonGroup>
           </Box>
@@ -366,8 +366,15 @@ export default function BookingForm() {
                   if given a minimum of a 48-hour notice.
                 </li>
                 <li>
-                  if you have questions about placement, design or anything else
-                  please message me on Instagram or setup a consultation.
+                  If you have questions about placement, design or anything else
+                  please message me on{" "}
+                  <a
+                    style={{ textDecoration: "underline" }}
+                    href='https://www.instagram.com/inkbysilvereye/'
+                    target='__blank'>
+                    Instagram
+                  </a>{" "}
+                  or setup a consultation.
                 </li>
               </ul>
             )}

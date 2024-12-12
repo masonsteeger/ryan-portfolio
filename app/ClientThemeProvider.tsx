@@ -81,6 +81,14 @@ const ClientThemeProvider = ({ children }: React.PropsWithChildren) => {
     typography: {
       fontFamily: `${josefinSans.style.fontFamily} ${quicksand.style.fontFamily} `,
     },
+    palette: {
+      primary: {
+        main: "#857fff",
+      },
+      secondary: {
+        main: "#f4cc3a",
+      },
+    },
   });
   return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
 };
