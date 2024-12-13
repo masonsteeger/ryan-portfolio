@@ -6,6 +6,7 @@ type ImageContainerProps = {
   src: string;
   alt: string;
   style?: React.CSSProperties;
+  priority?: boolean;
 };
 
 const ImageContainer = (props: ImageContainerProps) => {
@@ -14,6 +15,7 @@ const ImageContainer = (props: ImageContainerProps) => {
       <Image
         src={props.src}
         alt={props.alt}
+        priority={props.priority ?? false}
         width={1000}
         height={1000}
         className={classes.image}
