@@ -31,7 +31,42 @@ import { CircularProgress, Typography } from "@mui/material";
 import update from "immutability-helper";
 import Container from "../Containers/Container";
 
-export default function BookingForm() {
+interface BookingFormProps {
+  artist: {
+    sub: string;
+    workingDays: Day[];
+  };
+}
+
+interface ImageUploadReturnType {
+  $metadata: {
+    httpStatusCode: number;
+  };
+}
+
+function Loading() {
+  return (
+    <Box
+      sx={{
+        height: "100%",
+        width: "100%",
+        backgroundColor: "rgba(0,0,0,0.3)",
+        position: "absolute",
+        top: "0",
+        left: "0",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        pointerEvents: "all",
+        zIndex: "1000000",
+      }}>
+      <CircularProgress color={"secondary"} size={300} />
+    </Box>
+  );
+}
+
+export default function BookingForm(props: Readonly<BookingFormProps>) {
+  const { artist } = props;
   const [form, setForm] = useState<Form>({
     firstName: "",
     lastName: "",
@@ -54,42 +89,6 @@ export default function BookingForm() {
   const [placementErrorMsg, setPlacementErrorMsg] = useState<string | null>(
     null
   );
-
-  const artist = {
-    workingDays: [
-      {
-        day: "Sunday",
-      },
-      {
-        day: "Monday",
-      },
-      {
-        opening: { hour: 10, minute: 0 },
-        closing: { hour: 18, minute: 0 },
-        day: "Tuesday",
-      },
-      {
-        opening: { hour: 10, minute: 0 },
-        closing: { hour: 18, minute: 0 },
-        day: "Wednesday",
-      },
-      {
-        opening: { hour: 10, minute: 0 },
-        closing: { hour: 18, minute: 0 },
-        day: "Thursday",
-      },
-      {
-        opening: { hour: 10, minute: 0 },
-        closing: { hour: 18, minute: 0 },
-        day: "Friday",
-      },
-      {
-        opening: { hour: 10, minute: 0 },
-        closing: { hour: 18, minute: 0 },
-        day: "Saturday",
-      },
-    ],
-  };
 
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [emailConfirm, setEmailConfirm] = useState<string>("");
@@ -132,77 +131,90 @@ export default function BookingForm() {
   };
 
   const submitForm = async () => {
-    // if (false) {
-    //   if (filesToUp.length < minFiles) {
-    //     setShowErrors(true);
-    //     setLoading(false);
-    //     return setRefErrorMsg(
-    //       `Please upload ${minFiles} or more reference images`
-    //     );
-    //   } else if (
-    //     !form.firstName ||
-    //     !form.lastName ||
-    //     !form.email ||
-    //     form.email !== emailConfirm ||
-    //     !form.phone ||
-    //     !form.color ||
-    //     !form.size ||
-    //     !form.idea ||
-    //     form.placement.length === 0 ||
-    //     form.preferredDay.length === 0
-    //   ) {
-    //     setLoading(false);
-    //     return setShowErrors(true);
-    //   } else {
-    //     axios
-    //       .post(`${process.env.NEXT_PUBLIC_FORM_ENDPOINT}`, {
-    //         type: "post",
-    //         form: { ...form, budget: priceVal },
-    //         artistId: artist.sub,
-    //         username: process.env.NEXT_PUBLIC_ARTIST_USERNAME,
-    //       })
-    //       .then(async (res) => {
-    //         await Promise.all(
-    //           filesToUp.map((obj, i) => {
-    //             return new Promise(async (resolve, reject) => {
-    //               return axios
-    //                 .post(`${process.env.NEXT_PUBLIC_FORM_ENDPOINT}`, {
-    //                   type: "img",
-    //                   image: obj.b64.split(",")[1],
-    //                   i: i,
-    //                   customerId: res.data.customerId,
-    //                   artistId: artist.sub,
-    //                 })
-    //                 .then((res) => {
-    //                   resolve(res);
-    //                 })
-    //                 .catch((err) => {
-    //                   reject(err);
-    //                 });
-    //             });
-    //           })
-    //         ).then((res) => {
-    //           let hasError = false;
-    //           res.forEach((obj: any) => {
-    //             if (obj.status !== 200) {
-    //               setLoading(false);
-    //               setNetErr(true);
-    //               setIsSubmitted(false);
-    //               hasError = true;
-    //             }
-    //           });
-    //           if (!hasError) {
-    //             setLoading(false);
-    //             setIsSubmitted(true);
-    //           }
-    //         });
-    //       })
-    //       .catch((err) => {
-    //         setLoading(false);
-    //         setNetErr(true);
-    //       });
-    //   }
-    // }
+    setLoading(true);
+    if (filesToUp.length < minFiles) {
+      setShowErrors(true);
+      setLoading(false);
+      return setRefErrorMsg(
+        `Please upload ${minFiles} or more reference images`
+      );
+    } else if (
+      !form.firstName ||
+      !form.lastName ||
+      !form.email ||
+      form.email !== emailConfirm ||
+      !form.phone ||
+      !form.color ||
+      !form.size ||
+      !form.idea ||
+      form.placement.length === 0 ||
+      form.preferredDay.length === 0
+    ) {
+      setLoading(false);
+      return setShowErrors(true);
+    } else {
+      await fetch(`${process.env.NEXT_PUBLIC_FORM_ENDPOINT}`, {
+        method: "POST",
+        body: JSON.stringify({
+          type: "post",
+          form: { ...form, budget: priceVal },
+          artistId: artist.sub,
+          username: process.env.NEXT_PUBLIC_ARTIST_USERNAME,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((json) => json.json())
+        .then(async (res) => {
+          await Promise.all(
+            filesToUp.map((obj, i) => {
+              return new Promise(async (resolve, reject) => {
+                return await fetch(`${process.env.NEXT_PUBLIC_FORM_ENDPOINT}`, {
+                  method: "POST",
+                  body: JSON.stringify({
+                    type: "img",
+                    image: obj.b64.split(",")[1],
+                    i: i,
+                    customerId: res.customerId,
+                    artistId: artist.sub,
+                  }),
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                })
+                  .then((json) => json.json())
+                  .then((res) => {
+                    resolve(res);
+                  })
+                  .catch((err) => {
+                    reject(err);
+                  });
+              });
+            })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ).then((res: any) => {
+            let hasError = false;
+            console.log(res);
+            res.forEach((obj: ImageUploadReturnType) => {
+              if (obj.$metadata.httpStatusCode !== 200) {
+                setLoading(false);
+                setNetErr(true);
+                setIsSubmitted(false);
+                hasError = true;
+              }
+            });
+            if (!hasError) {
+              setLoading(false);
+              setIsSubmitted(true);
+            }
+          });
+        })
+        .catch((err) => {
+          setLoading(false);
+          setNetErr(true);
+        });
+    }
     setLoading(false);
     setIsSubmitted(true);
   };
@@ -231,6 +243,10 @@ export default function BookingForm() {
     }
   };
 
+  if (!artist) {
+    return <h1>Artist not found</h1>;
+  }
+
   if (!isSubmitted) {
     return (
       <Stack
@@ -240,7 +256,7 @@ export default function BookingForm() {
           width: "100%",
           color: "black",
         }}>
-        {loading ? <CircularProgress /> : null}
+        {loading ? <Loading /> : null}
         <Container
           style={{
             backgroundColor: "white",
