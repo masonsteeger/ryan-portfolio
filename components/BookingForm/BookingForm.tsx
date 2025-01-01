@@ -953,23 +953,24 @@ export default function BookingForm(props: Readonly<BookingFormProps>) {
               fullWidth>
               Submit Request
             </Button>
-            {/* <Stack
+            <Stack
               direction={"column"}
               justifyContent={"center"}
               alignItems={"center"}>
-              <p style={{ margin: "10px 0" }}>Powered by</p>
+              <p style={{ margin: "8px 0" }}>Powered by</p>
               <Image
-                src='/inkme-logo.png'
+                src='/static/images/inkme-logo.png'
                 alt='artist logo'
                 width='1000'
                 height='1000'
                 style={{
                   width: "auto",
-                  height: "35px",
+                  height: "28px",
                   backgroundColor: "white",
+                  marginBottom: "12px",
                 }}
               />
-            </Stack> */}
+            </Stack>
           </Stack>
         </Container>
       </Stack>
