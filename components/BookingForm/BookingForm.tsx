@@ -159,6 +159,7 @@ export default function BookingForm() {
         `Please upload ${minFiles} or more reference images`
       );
     } else if (
+      !artist ||
       !form.firstName ||
       !form.lastName ||
       !form.email ||
