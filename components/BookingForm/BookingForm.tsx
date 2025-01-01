@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -31,17 +31,15 @@ import { CircularProgress, Typography } from "@mui/material";
 import update from "immutability-helper";
 import Container from "../Containers/Container";
 
-interface BookingFormProps {
-  artist: {
-    sub: string;
-    workingDays: Day[];
-  };
-}
-
 interface ImageUploadReturnType {
   $metadata: {
     httpStatusCode: number;
   };
+}
+
+interface Artist {
+  sub: string;
+  workingDays: Day[];
 }
 
 function Loading() {
@@ -65,8 +63,33 @@ function Loading() {
   );
 }
 
-export default function BookingForm(props: Readonly<BookingFormProps>) {
-  const { artist } = props;
+async function getArtistData() {
+  return await fetch(`${process.env.NEXT_PUBLIC_FORM_ENDPOINT}`, {
+    method: "POST",
+    body: JSON.stringify({
+      type: "get",
+      username: process.env.NEXT_PUBLIC_ARTIST_USERNAME,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      return data;
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+}
+
+export default function BookingForm() {
+  const [artist, setArtist] = React.useState<Artist | null>(null);
+
+  useEffect(() => {
+    getArtistData().then((data) => setArtist(data));
+  }, []);
+  console.log(artist);
   const [form, setForm] = useState<Form>({
     firstName: "",
     lastName: "",
@@ -86,9 +109,6 @@ export default function BookingForm(props: Readonly<BookingFormProps>) {
   const [filesToUp, setFilesToUp] = useState<b64FileList[]>([]);
   const [showErrors, setShowErrors] = useState<boolean>(false);
   const [refErrorMsg, setRefErrorMsg] = useState<string | null>(null);
-  const [placementErrorMsg, setPlacementErrorMsg] = useState<string | null>(
-    null
-  );
 
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [emailConfirm, setEmailConfirm] = useState<string>("");
@@ -244,7 +264,7 @@ export default function BookingForm(props: Readonly<BookingFormProps>) {
   };
 
   if (!artist) {
-    return <h1>Artist not found</h1>;
+    return <Loading />;
   }
 
   if (!isSubmitted) {
@@ -557,10 +577,7 @@ export default function BookingForm(props: Readonly<BookingFormProps>) {
               <FormControl
                 fullWidth
                 required
-                error={Boolean(
-                  placementErrorMsg ||
-                    (showErrors && form.placement.length === 0)
-                )}>
+                error={Boolean(showErrors && form.placement.length === 0)}>
                 <InputLabel id='demo-simple-select-label'>Placement</InputLabel>
                 <Select
                   multiple
@@ -610,7 +627,6 @@ export default function BookingForm(props: Readonly<BookingFormProps>) {
                   <MenuItem value={"Shin"}>Shin</MenuItem>
                   <MenuItem value={"Thigh"}>Thigh</MenuItem>
                 </Select>
-                <FormHelperText>{placementErrorMsg}</FormHelperText>
               </FormControl>
             </Stack>
             <Stack
@@ -791,7 +807,7 @@ export default function BookingForm(props: Readonly<BookingFormProps>) {
                   {filesToUp.map((obj, i) => {
                     return (
                       <Box
-                        key={`img-ref-${i}`}
+                        key={`img-ref-container-${obj.url}`}
                         className={classes.imageContainer}>
                         {!obj.isFlash && (
                           <IconButton
@@ -824,7 +840,7 @@ export default function BookingForm(props: Readonly<BookingFormProps>) {
                           </IconButton>
                         )}
                         <Image
-                          alt={`ref-img-${i}`}
+                          alt={`ref-img-${obj.url}`}
                           src={obj.url}
                           width={obj.w / 2}
                           height={obj.h / 2}
