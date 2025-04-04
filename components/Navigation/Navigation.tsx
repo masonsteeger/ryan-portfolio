@@ -46,7 +46,7 @@ export default function MainNavigation() {
             ? classes.headerAnimationShow
             : classes.headerAnimationHide
         }`}>
-        <Link href='/'>
+        <Link href='/' onClick={() => setMenuOpen(false)}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <Image
               src='/static/images/logo-icon.jpg'
