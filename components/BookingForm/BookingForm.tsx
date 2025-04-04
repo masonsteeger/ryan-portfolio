@@ -89,7 +89,7 @@ export default function BookingForm() {
   useEffect(() => {
     getArtistData().then((data) => setArtist(data));
   }, []);
-  console.log(artist);
+
   const [form, setForm] = useState<Form>({
     firstName: "",
     lastName: "",
@@ -276,6 +276,7 @@ export default function BookingForm() {
         sx={{
           width: "100%",
           color: "black",
+          marginBottom: "24px",
         }}>
         {loading ? <Loading /> : null}
         <Container
@@ -395,7 +396,7 @@ export default function BookingForm() {
               <ul className={classes["list-container"]}>
                 <li>
                   A 50$ deposit is required to book. This will be deducted from
-                  the price of the tattoo. Please Zelle 4695092115 before
+                  the price of the tattoo. Please Zelle (469) 509-2115 before
                   completing this form.
                 </li>
                 <li>
@@ -1000,7 +1001,7 @@ export default function BookingForm() {
         alignItems={"center"}
         sx={{
           width: "100%",
-          height: "100vh",
+          height: "100dvh",
           backgroundImage: "url(./form-bg.jpeg)",
           backgroundRepeat: "no-repeat",
           backgroundSize: "cover",

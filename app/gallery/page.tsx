@@ -14,10 +14,8 @@ const images: string[] = [
 
 export default function Gallery() {
   return (
-    <>
-      <div className='page-title'>
-        <h1>Gallery</h1>
-      </div>
+    <div className='page-content'>
+      <h1 className='page-title'>Gallery</h1>
       <div className={classes["gallery-container"]}>
         {images.map((image: string, i: number) => {
           return (
@@ -34,6 +32,6 @@ export default function Gallery() {
           );
         })}
       </div>
-    </>
+    </div>
   );
 }

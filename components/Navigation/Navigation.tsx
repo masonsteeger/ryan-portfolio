@@ -74,6 +74,14 @@ export default function MainNavigation() {
           </button>
         )}
       </header>
+      {screenSize.width <= 768 && menuOpen && (
+        <button
+          className={classes.backdrop}
+          onClick={() => setMenuOpen(false)}
+          aria-label='Close menu'
+          type='button'
+        />
+      )}
       {screenSize.width <= 768 && (
         <div
           className={`${classes.mobileMenu} ${
