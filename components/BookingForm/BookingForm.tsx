@@ -395,9 +395,8 @@ export default function BookingForm() {
             ) : (
               <ul className={classes["list-container"]}>
                 <li>
-                  A 50$ deposit is required to book. This will be deducted from
-                  the price of the tattoo. Please Zelle (469) 509-2115 before
-                  completing this form.
+                  A 50$ deposit is required to schedule your appointment. This
+                  will be deducted from the price of the tattoo.
                 </li>
                 <li>
                   Deposits are non refundable but can be re used to reschedule
