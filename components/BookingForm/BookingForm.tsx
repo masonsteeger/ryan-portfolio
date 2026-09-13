@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -84,11 +85,26 @@ async function getArtistData() {
 }
 
 export default function BookingForm() {
+  const searchParams = useSearchParams();
   const [artist, setArtist] = React.useState<Artist | null>(null);
+  const [flashId, setFlashId] = useState<string | null>(null);
+  const [flashPrice, setFlashPrice] = useState<number | null>(null);
+  const [flashImageUrl, setFlashImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     getArtistData().then((data) => setArtist(data));
-  }, []);
+
+    // Initialize flash context from query parameters
+    const flash = searchParams.get("flash");
+    const referenceUrl = searchParams.get("referenceUrl");
+    const price = searchParams.get("price");
+
+    if (flash && referenceUrl && price) {
+      setFlashId(flash);
+      setFlashImageUrl(referenceUrl);
+      setFlashPrice(parseFloat(price));
+    }
+  }, [searchParams]);
 
   const [form, setForm] = useState<Form>({
     firstName: "",
@@ -117,6 +133,45 @@ export default function BookingForm() {
   const minDistance = 50;
 
   const minFiles = 1;
+
+  // Add flash image as reference when flash context is initialized
+  useEffect(() => {
+    if (flashImageUrl && flashPrice !== null) {
+      // Set the idea field to the flash description
+      setForm((prev) => ({
+        ...prev,
+        idea: `Set flash piece: $${flashPrice.toFixed(2)}`,
+      }));
+
+      // Set the budget to the flash price
+      setPriceVal([flashPrice, flashPrice]);
+
+      // Add flash image as a reference image with isFlash flag
+      fetch(flashImageUrl)
+        .then((res) => res.blob())
+        .then((blob) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const img = new window.Image();
+            img.src = reader.result as string;
+            img.onload = () => {
+              setFilesToUp((prev) => [
+                {
+                  url: reader.result as string,
+                  b64: reader.result as string,
+                  w: img.width,
+                  h: img.height,
+                  isFlash: true,
+                },
+                ...prev,
+              ]);
+            };
+          };
+          reader.readAsDataURL(blob);
+        })
+        .catch((err) => console.error("Failed to load flash image:", err));
+    }
+  }, [flashImageUrl, flashPrice]);
 
   const handleBudgetChange = (
     newValue: number | number[],
@@ -152,6 +207,14 @@ export default function BookingForm() {
 
   const submitForm = async () => {
     setLoading(true);
+
+    // Validate flash image is still present if booking flash
+    if (flashId && !filesToUp.some((file) => file.isFlash)) {
+      setShowErrors(true);
+      setLoading(false);
+      return setRefErrorMsg("Flash design image must be included");
+    }
+
     if (filesToUp.length < minFiles) {
       setShowErrors(true);
       setLoading(false);
@@ -174,11 +237,15 @@ export default function BookingForm() {
       setLoading(false);
       return setShowErrors(true);
     } else {
+      // Use flash price if booking flash, otherwise use price range
+      const budget = flashPrice !== null ? [flashPrice, flashPrice] : priceVal;
+
       await fetch(`${process.env.NEXT_PUBLIC_FORM_ENDPOINT}`, {
         method: "POST",
         body: JSON.stringify({
           type: "post",
-          form: { ...form, budget: priceVal },
+          form: { ...form, budget },
+          flashId: flashId || undefined,
           artistId: artist.sub,
           username: process.env.NEXT_PUBLIC_ARTIST_USERNAME,
         }),
@@ -680,23 +747,40 @@ export default function BookingForm() {
               alignItems={"center"}
               spacing={2}
               sx={{ width: "100%" }}>
-              <TextField
-                error={showErrors && !form.idea}
-                required
-                placeholder='Please include as much detail as possible!'
-                value={form.idea}
-                onChange={(e) => {
-                  setForm((p) => {
-                    p.idea = e.target.value;
-                    return { ...p };
-                  });
-                }}
-                multiline
-                fullWidth
-                rows={4}
-                label='Description of tattoo'
-                variant='outlined'
-              />
+              {flashId ? (
+                <Box sx={{ width: "100%" }}>
+                  <TextField
+                    disabled
+                    multiline
+                    fullWidth
+                    rows={4}
+                    value={form.idea}
+                    label='Description of tattoo'
+                    variant='outlined'
+                  />
+                  <FormHelperText sx={{ marginTop: "4px" }}>
+                    This booking is for a flash design - description is set
+                  </FormHelperText>
+                </Box>
+              ) : (
+                <TextField
+                  error={showErrors && !form.idea}
+                  required
+                  placeholder='Please include as much detail as possible!'
+                  value={form.idea}
+                  onChange={(e) => {
+                    setForm((p) => {
+                      p.idea = e.target.value;
+                      return { ...p };
+                    });
+                  }}
+                  multiline
+                  fullWidth
+                  rows={4}
+                  label='Description of tattoo'
+                  variant='outlined'
+                />
+              )}
             </Stack>
 
             <Stack
@@ -719,23 +803,36 @@ export default function BookingForm() {
                 required>
                 What is your budget for this tattoo
               </FormLabel>
-              <Slider
-                getAriaLabel={() => "Minimum distance shift"}
-                value={priceVal}
-                step={50}
-                min={200}
-                max={1200}
-                onChange={(event, newValue, activeThumb) =>
-                  handleBudgetChange(newValue, activeThumb)
-                }
-                valueLabelDisplay='auto'
-                valueLabelFormat={(value) => "$" + value}
-                disableSwap
-                sx={{ marginTop: "20px" }}
-              />
-              <h3 style={{ marginBottom: "0px" }}>
-                ${priceVal[0]} - ${priceVal[1]}
-              </h3>
+              {flashId ? (
+                <Box sx={{ marginTop: "20px", textAlign: "center" }}>
+                  <h3 style={{ marginBottom: "0px", marginTop: "0px" }}>
+                    ${flashPrice?.toFixed(2)}
+                  </h3>
+                  <FormHelperText sx={{ marginTop: "8px" }}>
+                    This booking is for a flash design - price is set
+                  </FormHelperText>
+                </Box>
+              ) : (
+                <>
+                  <Slider
+                    getAriaLabel={() => "Minimum distance shift"}
+                    value={priceVal}
+                    step={50}
+                    min={200}
+                    max={1200}
+                    onChange={(event, newValue, activeThumb) =>
+                      handleBudgetChange(newValue, activeThumb)
+                    }
+                    valueLabelDisplay='auto'
+                    valueLabelFormat={(value) => "$" + value}
+                    disableSwap
+                    sx={{ marginTop: "20px" }}
+                  />
+                  <h3 style={{ marginBottom: "0px" }}>
+                    ${priceVal[0]} - ${priceVal[1]}
+                  </h3>
+                </>
+              )}
             </Stack>
             <Stack
               direction='row'
