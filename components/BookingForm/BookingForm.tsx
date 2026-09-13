@@ -99,10 +99,15 @@ export default function BookingForm() {
     const referenceUrl = searchParams.get("referenceUrl");
     const price = searchParams.get("price");
 
+    console.log("Query params - flash:", flash, "referenceUrl:", referenceUrl, "price:", price);
+
     if (flash && referenceUrl && price) {
+      console.log("Setting flash context");
       setFlashId(flash);
       setFlashImageUrl(referenceUrl);
       setFlashPrice(parseFloat(price));
+    } else {
+      console.log("Not all flash params present");
     }
   }, [searchParams]);
 
@@ -137,6 +142,8 @@ export default function BookingForm() {
   // Add flash image as reference when flash context is initialized
   useEffect(() => {
     if (flashImageUrl && flashPrice !== null) {
+      console.log("Adding flash image:", flashImageUrl);
+
       // Set the idea field to the flash description
       setForm((prev) => ({
         ...prev,
@@ -147,29 +154,66 @@ export default function BookingForm() {
       setPriceVal([flashPrice, flashPrice]);
 
       // Add flash image as a reference image with isFlash flag
-      fetch(flashImageUrl)
-        .then((res) => res.blob())
-        .then((blob) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const img = new window.Image();
-            img.src = reader.result as string;
-            img.onload = () => {
-              setFilesToUp((prev) => [
-                {
-                  url: reader.result as string,
-                  b64: reader.result as string,
-                  w: img.width,
-                  h: img.height,
-                  isFlash: true,
-                },
-                ...prev,
-              ]);
+      // If it's already a data URL, use it directly
+      if (flashImageUrl.startsWith("data:")) {
+        console.log("Flash image is already a data URL, processing directly");
+        const img = new window.Image();
+        img.src = flashImageUrl;
+        img.onload = () => {
+          console.log("Flash image loaded, dimensions:", img.width, "x", img.height);
+          setFilesToUp((prev) => [
+            {
+              url: flashImageUrl,
+              b64: flashImageUrl,
+              w: img.width,
+              h: img.height,
+              isFlash: true,
+            },
+            ...prev,
+          ]);
+        };
+        img.onerror = () => {
+          console.error("Failed to load flash image from data URL");
+        };
+      } else {
+        // Fetch remote URL
+        console.log("Fetching flash image from URL:", flashImageUrl);
+        fetch(flashImageUrl, { mode: 'no-cors' })
+          .then((res) => {
+            console.log("Flash image fetch response:", res.status, res.type);
+            return res.blob();
+          })
+          .then((blob) => {
+            console.log("Flash image blob created, size:", blob.size);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              console.log("FileReader complete, data URL length:", (reader.result as string)?.length);
+              const img = new window.Image();
+              img.src = reader.result as string;
+              img.onload = () => {
+                console.log("Flash image loaded from blob, dimensions:", img.width, "x", img.height);
+                setFilesToUp((prev) => [
+                  {
+                    url: reader.result as string,
+                    b64: reader.result as string,
+                    w: img.width,
+                    h: img.height,
+                    isFlash: true,
+                  },
+                  ...prev,
+                ]);
+              };
+              img.onerror = () => {
+                console.error("Failed to load flash image from blob");
+              };
             };
-          };
-          reader.readAsDataURL(blob);
-        })
-        .catch((err) => console.error("Failed to load flash image:", err));
+            reader.onerror = () => {
+              console.error("FileReader error");
+            };
+            reader.readAsDataURL(blob);
+          })
+          .catch((err) => console.error("Failed to fetch/process flash image:", err));
+      }
     }
   }, [flashImageUrl, flashPrice]);
 
