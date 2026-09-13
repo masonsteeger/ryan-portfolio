@@ -1,7 +1,9 @@
 export type FlashDesign = {
   id: string;
   price: number;
-  src: string;
+  src?: string;
+  b64?: string;
+  base64?: string;
 };
 
 export type FlashContext = {

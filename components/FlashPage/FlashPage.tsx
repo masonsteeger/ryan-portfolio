@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Box, CircularProgress, Stack, Typography, Button } from "@mui/material";
 import Image from "next/image";
 import { FlashDesign } from "@/types/Flash";
+import { useFlash } from "@/contexts/FlashContext";
 import classes from "./FlashPage.module.scss";
 
 async function getFlashDesigns() {
@@ -45,22 +46,32 @@ function Loading() {
 
 function FlashDesignCard({ design }: { design: FlashDesign }) {
   const router = useRouter();
+  const flashContext = useFlash();
 
   // Validate design data
-  if (!design || !design.id || design.price === undefined || !design.src) {
+  if (!design || !design.id || design.price === undefined) {
+    return null;
+  }
+
+  // Use base64 if available, fall back to src
+  const imageData = design.b64 || design.base64 || design.src;
+  if (!imageData) {
     return null;
   }
 
   const handleClick = () => {
-    const params = new URLSearchParams({
-      flash: design.id,
-      referenceUrl: design.src,
-      price: design.price.toString(),
-    });
-    router.push(`/booking?${params.toString()}`);
+    // Store the selected flash design in context
+    if (flashContext) {
+      flashContext.setSelectedFlash(design);
+    }
+    // Navigate to booking form
+    router.push(`/booking`);
   };
 
   const price = typeof design.price === 'number' ? design.price : parseFloat(design.price as any);
+
+  // Use base64 for display if available
+  const displayImage = design.b64 || design.base64 || design.src;
 
   return (
     <Box
@@ -74,13 +85,15 @@ function FlashDesignCard({ design }: { design: FlashDesign }) {
         },
       }}>
       <Box className={classes.imageContainer}>
-        <Image
-          src={design.src}
-          alt={`Flash design ${design.id}`}
-          width={300}
-          height={300}
-          className={classes.image}
-        />
+        {displayImage && (
+          <Image
+            src={displayImage}
+            alt={`Flash design ${design.id}`}
+            width={300}
+            height={300}
+            className={classes.image}
+          />
+        )}
       </Box>
       <Box className={classes.info}>
         <Typography variant="h6" className={classes.price}>
@@ -114,7 +127,8 @@ export default function FlashPage() {
 
       if (Array.isArray(data)) {
         flashDesigns = data.filter((item: any) => {
-          const isValid = item && item.id && item.price !== undefined && item.src;
+          const hasImage = item.src || item.b64 || item.base64;
+          const isValid = item && item.id && item.price !== undefined && hasImage;
           if (!isValid) {
             console.log("Filtered out item:", item);
           }
@@ -122,15 +136,17 @@ export default function FlashPage() {
         });
       } else if (data && typeof data === "object") {
         // If it's a single object, check if it has the right properties
-        if (data.id && data.price !== undefined && data.src) {
+        const hasImage = data.src || data.b64 || data.base64;
+        if (data.id && data.price !== undefined && hasImage) {
           flashDesigns = [data];
         } else {
           // Maybe it's wrapped in an array property
           const arrayProp = Object.values(data).find(val => Array.isArray(val));
           if (arrayProp) {
-            flashDesigns = (arrayProp as any[]).filter((item: any) =>
-              item && item.id && item.price !== undefined && item.src
-            );
+            flashDesigns = (arrayProp as any[]).filter((item: any) => {
+              const itemHasImage = item.src || item.b64 || item.base64;
+              return item && item.id && item.price !== undefined && itemHasImage;
+            });
           }
         }
       }

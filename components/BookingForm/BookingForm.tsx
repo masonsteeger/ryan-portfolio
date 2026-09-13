@@ -2,6 +2,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useFlash } from "@/contexts/FlashContext";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -85,7 +86,7 @@ async function getArtistData() {
 }
 
 export default function BookingForm() {
-  const searchParams = useSearchParams();
+  const flashContext = useFlash();
   const [artist, setArtist] = React.useState<Artist | null>(null);
   const [flashId, setFlashId] = useState<string | null>(null);
   const [flashPrice, setFlashPrice] = useState<number | null>(null);
@@ -93,23 +94,26 @@ export default function BookingForm() {
 
   useEffect(() => {
     getArtistData().then((data) => setArtist(data));
+  }, []);
 
-    // Initialize flash context from query parameters
-    const flash = searchParams.get("flash");
-    const referenceUrl = searchParams.get("referenceUrl");
-    const price = searchParams.get("price");
+  useEffect(() => {
+    // Initialize flash context from FlashContext
+    const selectedFlash = flashContext?.selectedFlash;
 
-    console.log("Query params - flash:", flash, "referenceUrl:", referenceUrl, "price:", price);
+    if (selectedFlash) {
+      console.log("Flash design selected:", selectedFlash.id);
+      const imageData = selectedFlash.b64 || selectedFlash.base64 || selectedFlash.src;
+      const price = typeof selectedFlash.price === 'string'
+        ? parseFloat(selectedFlash.price)
+        : selectedFlash.price;
 
-    if (flash && referenceUrl && price) {
-      console.log("Setting flash context");
-      setFlashId(flash);
-      setFlashImageUrl(referenceUrl);
-      setFlashPrice(parseFloat(price));
+      setFlashId(selectedFlash.id);
+      setFlashImageUrl(imageData || null);
+      setFlashPrice(price);
     } else {
-      console.log("Not all flash params present");
+      console.log("No flash design selected");
     }
-  }, [searchParams]);
+  }, [flashContext?.selectedFlash]);
 
   const [form, setForm] = useState<Form>({
     firstName: "",
@@ -141,8 +145,8 @@ export default function BookingForm() {
 
   // Add flash image as reference when flash context is initialized
   useEffect(() => {
-    if (flashImageUrl && flashPrice !== null) {
-      console.log("Adding flash image:", flashImageUrl?.substring(0, 50) + "...");
+    if (flashImageUrl && flashPrice !== null && typeof flashPrice === 'number') {
+      console.log("Adding flash image, URL length:", flashImageUrl?.length);
 
       // Set the idea field to the flash description
       setForm((prev) => ({
@@ -161,33 +165,42 @@ export default function BookingForm() {
       if (flashImageUrl && !flashImageUrl.startsWith("data:")) {
         // Assume it's base64, add data URL prefix
         imageDataUrl = `data:image/png;base64,${flashImageUrl}`;
-        console.log("Converting base64 to data URL");
+        console.log("Converting base64 to data URL, length:", imageDataUrl.length);
       }
 
+      // Add to filesToUp immediately with a default size, then update when loaded
+      setFilesToUp((prev) => {
+        const flashImageExists = prev.some(item => item.isFlash);
+        if (flashImageExists) {
+          console.log("Flash image already in filesToUp, skipping");
+          return prev;
+        }
+        console.log("Adding flash image to filesToUp with default dimensions");
+        return [
+          {
+            url: imageDataUrl,
+            b64: imageDataUrl, // Store the full base64 data URL
+            w: 800, // Default width
+            h: 800, // Default height
+            isFlash: true,
+          },
+          ...prev,
+        ];
+      });
+
+      // Load the image to get actual dimensions
       const img = new window.Image();
       img.onload = () => {
         console.log("Flash image loaded, dimensions:", img.width, "x", img.height);
-        setFilesToUp((prev) => {
-          const flashImageExists = prev.some(item => item.isFlash);
-          if (flashImageExists) {
-            console.log("Flash image already in filesToUp, skipping");
-            return prev;
-          }
-          console.log("Adding flash image to filesToUp");
-          return [
-            {
-              url: imageDataUrl,
-              b64: imageDataUrl, // Store the full base64 data URL
-              w: img.width,
-              h: img.height,
-              isFlash: true,
-            },
-            ...prev,
-          ];
-        });
+        // Update filesToUp with actual dimensions
+        setFilesToUp((prev) =>
+          prev.map((item) =>
+            item.isFlash ? { ...item, w: img.width, h: img.height } : item
+          )
+        );
       };
       img.onerror = () => {
-        console.error("Failed to load flash image:", flashImageUrl?.substring(0, 50));
+        console.error("Failed to load flash image");
       };
       // Allow cross-origin images
       img.crossOrigin = "anonymous";
