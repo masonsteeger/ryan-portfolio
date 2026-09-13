@@ -19,6 +19,9 @@ export default function MainNavigation() {
           <Link href='/gallery'>
             <li onClick={() => setMenuOpen(false)}>Gallery</li>
           </Link>
+          <Link href='/flash'>
+            <li onClick={() => setMenuOpen(false)}>Flash</li>
+          </Link>
           <Link href='/booking'>
             <li onClick={() => setMenuOpen(false)}>Booking</li>
           </Link>
