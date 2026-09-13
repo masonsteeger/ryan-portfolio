@@ -102,16 +102,40 @@ export default function FlashPage() {
       setError(null);
       const data = await getFlashDesigns();
       console.log("Flash designs response:", data);
+      console.log("Response type:", typeof data);
+      console.log("Is array:", Array.isArray(data));
+      if (data) {
+        console.log("Response keys:", Object.keys(data));
+        console.log("First item:", Array.isArray(data) ? data[0] : data);
+      }
 
       // Normalize the data to ensure it's in the right format
       let flashDesigns: FlashDesign[] = [];
 
       if (Array.isArray(data)) {
-        flashDesigns = data.filter(item => item && item.id && item.price !== undefined && item.src);
-      } else if (data && typeof data === "object" && data.id && data.price !== undefined && data.src) {
-        flashDesigns = [data];
+        flashDesigns = data.filter((item: any) => {
+          const isValid = item && item.id && item.price !== undefined && item.src;
+          if (!isValid) {
+            console.log("Filtered out item:", item);
+          }
+          return isValid;
+        });
+      } else if (data && typeof data === "object") {
+        // If it's a single object, check if it has the right properties
+        if (data.id && data.price !== undefined && data.src) {
+          flashDesigns = [data];
+        } else {
+          // Maybe it's wrapped in an array property
+          const arrayProp = Object.values(data).find(val => Array.isArray(val));
+          if (arrayProp) {
+            flashDesigns = (arrayProp as any[]).filter((item: any) =>
+              item && item.id && item.price !== undefined && item.src
+            );
+          }
+        }
       }
 
+      console.log("Processed flash designs:", flashDesigns);
       setDesigns(flashDesigns);
     } catch (err) {
       console.error("Failed to fetch flash designs:", err);

@@ -54,6 +54,8 @@ export default function MainNavigation() {
               alt='Ryan Leach Logo'
               width={75}
               height={75}
+              priority
+              unoptimized
             />
             Ryan Leach
           </div>
