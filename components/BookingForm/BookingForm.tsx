@@ -142,7 +142,7 @@ export default function BookingForm() {
   // Add flash image as reference when flash context is initialized
   useEffect(() => {
     if (flashImageUrl && flashPrice !== null) {
-      console.log("Adding flash image:", flashImageUrl);
+      console.log("Adding flash image:", flashImageUrl?.substring(0, 50) + "...");
 
       // Set the idea field to the flash description
       setForm((prev) => ({
@@ -154,7 +154,16 @@ export default function BookingForm() {
       setPriceVal([flashPrice, flashPrice]);
 
       // Add flash image as a reference image with isFlash flag
-      // Use a simple approach: load the image to get dimensions, then add it
+      // Handle both base64 strings and URLs
+      let imageDataUrl = flashImageUrl;
+
+      // If it's a base64 string without data URL prefix, add it
+      if (flashImageUrl && !flashImageUrl.startsWith("data:")) {
+        // Assume it's base64, add data URL prefix
+        imageDataUrl = `data:image/png;base64,${flashImageUrl}`;
+        console.log("Converting base64 to data URL");
+      }
+
       const img = new window.Image();
       img.onload = () => {
         console.log("Flash image loaded, dimensions:", img.width, "x", img.height);
@@ -167,8 +176,8 @@ export default function BookingForm() {
           console.log("Adding flash image to filesToUp");
           return [
             {
-              url: flashImageUrl,
-              b64: flashImageUrl, // Store URL as b64 for flash images
+              url: imageDataUrl,
+              b64: imageDataUrl, // Store the full base64 data URL
               w: img.width,
               h: img.height,
               isFlash: true,
@@ -178,11 +187,11 @@ export default function BookingForm() {
         });
       };
       img.onerror = () => {
-        console.error("Failed to load flash image from URL:", flashImageUrl);
+        console.error("Failed to load flash image:", flashImageUrl?.substring(0, 50));
       };
       // Allow cross-origin images
       img.crossOrigin = "anonymous";
-      img.src = flashImageUrl;
+      img.src = imageDataUrl;
     }
   }, [flashImageUrl, flashPrice]);
 
