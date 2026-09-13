@@ -46,6 +46,11 @@ function Loading() {
 function FlashDesignCard({ design }: { design: FlashDesign }) {
   const router = useRouter();
 
+  // Validate design data
+  if (!design || !design.id || design.price === undefined || !design.src) {
+    return null;
+  }
+
   const handleClick = () => {
     const params = new URLSearchParams({
       flash: design.id,
@@ -54,6 +59,8 @@ function FlashDesignCard({ design }: { design: FlashDesign }) {
     });
     router.push(`/booking?${params.toString()}`);
   };
+
+  const price = typeof design.price === 'number' ? design.price : parseFloat(design.price as any);
 
   return (
     <Box
@@ -77,7 +84,7 @@ function FlashDesignCard({ design }: { design: FlashDesign }) {
       </Box>
       <Box className={classes.info}>
         <Typography variant="h6" className={classes.price}>
-          ${design.price.toFixed(2)}
+          ${isNaN(price) ? "N/A" : price.toFixed(2)}
         </Typography>
       </Box>
     </Box>
@@ -94,13 +101,18 @@ export default function FlashPage() {
       setIsRetrying(true);
       setError(null);
       const data = await getFlashDesigns();
+      console.log("Flash designs response:", data);
+
+      // Normalize the data to ensure it's in the right format
+      let flashDesigns: FlashDesign[] = [];
+
       if (Array.isArray(data)) {
-        setDesigns(data);
-      } else if (data && typeof data === "object") {
-        setDesigns([data]);
-      } else {
-        setDesigns([]);
+        flashDesigns = data.filter(item => item && item.id && item.price !== undefined && item.src);
+      } else if (data && typeof data === "object" && data.id && data.price !== undefined && data.src) {
+        flashDesigns = [data];
       }
+
+      setDesigns(flashDesigns);
     } catch (err) {
       console.error("Failed to fetch flash designs:", err);
       setError("Failed to load flash designs. Please try again.");

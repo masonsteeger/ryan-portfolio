@@ -39,8 +39,6 @@ export default function MainNavigation() {
     []
   );
 
-  console.log(show);
-
   return (
     <>
       <header
