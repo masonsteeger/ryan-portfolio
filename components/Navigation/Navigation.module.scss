@@ -63,17 +63,17 @@
   }
 
   .mobileMenu {
-    height: 166px;
+    height: auto;
     width: 100%;
     padding: 16px 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    position: absolute;
-    top: 0;
+    position: fixed;
+    top: 96px;
     left: 0;
-    transform: translateY(-70px);
+    transform: translateY(-100%);
     transition: transform 0.225s ease-in-out;
     z-index: 99;
     background: none;
@@ -109,7 +109,7 @@
     }
   }
   .mobileMenuOpen {
-    transform: translateY(96px);
+    transform: translateY(0);
   }
 }
 

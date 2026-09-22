@@ -1,10 +1,19 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Box, CircularProgress, Stack, Typography, Button } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  Stack,
+  Typography,
+  Button,
+  Chip,
+  Tooltip,
+} from "@mui/material";
 import Image from "next/image";
 import { FlashDesign } from "@/types/Flash";
 import { useFlash } from "@/contexts/FlashContext";
+import FlashDetailsModal from "@/components/FlashDetailsModal/FlashDetailsModal";
 import classes from "./FlashPage.module.scss";
 
 async function getFlashDesigns() {
@@ -39,39 +48,38 @@ function Loading() {
         justifyContent: "center",
         alignItems: "center",
       }}>
-      <CircularProgress color="secondary" size={60} />
+      <CircularProgress color='secondary' size={60} />
     </Box>
   );
 }
 
-function FlashDesignCard({ design }: { design: FlashDesign }) {
-  const router = useRouter();
-  const flashContext = useFlash();
+// Helper to convert string "true"/"false" to boolean
+function parseBoolean(value: any): boolean | undefined {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") return value.toLowerCase() === "true";
+  return undefined;
+}
 
+interface FlashDesignCardProps {
+  design: FlashDesign;
+  onOpenModal: (design: FlashDesign) => void;
+}
+
+function FlashDesignCard({ design, onOpenModal }: FlashDesignCardProps) {
   // Validate design data
   if (!design || !design.id || design.price === undefined) {
     return null;
   }
 
-  // Use base64 if available, fall back to src
-  const imageData = design.b64 || design.base64 || design.src;
+  // Use src (URL) only
+  const imageData = design.src;
   if (!imageData) {
     return null;
   }
 
   const handleClick = () => {
-    // Store the selected flash design in context
-    if (flashContext) {
-      flashContext.setSelectedFlash(design);
-    }
-    // Navigate to booking form
-    router.push(`/booking`);
+    onOpenModal(design);
   };
-
-  const price = typeof design.price === 'number' ? design.price : parseFloat(design.price as any);
-
-  // Use base64 for display if available
-  const displayImage = design.b64 || design.base64 || design.src;
 
   return (
     <Box
@@ -85,9 +93,9 @@ function FlashDesignCard({ design }: { design: FlashDesign }) {
         },
       }}>
       <Box className={classes.imageContainer}>
-        {displayImage && (
+        {imageData && (
           <Image
-            src={displayImage}
+            src={imageData}
             alt={`Flash design ${design.id}`}
             width={300}
             height={300}
@@ -96,18 +104,62 @@ function FlashDesignCard({ design }: { design: FlashDesign }) {
         )}
       </Box>
       <Box className={classes.info}>
-        <Typography variant="h6" className={classes.price}>
-          ${isNaN(price) ? "N/A" : price.toFixed(2)}
-        </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}>
+          <Typography variant='h6' className={classes.price}>
+            {design.price}
+          </Typography>
+          {parseBoolean(design.repeatable) !== undefined && (
+            <Tooltip
+              title={
+                parseBoolean(design.repeatable)
+                  ? "This design can be repeated several times"
+                  : "This design is only available for one person"
+              }
+              placement='top'
+              arrow
+              slotProps={{
+                tooltip: {
+                  sx: {
+                    fontSize: "0.95rem",
+                    backgroundColor: "rgba(0, 0, 0, 0.87)",
+                    padding: "8px 12px",
+                  },
+                },
+              }}>
+              <Chip
+                label={
+                  parseBoolean(design.repeatable) ? "✓ Repeatable" : "⚠ Limited"
+                }
+                size='small'
+                variant={parseBoolean(design.repeatable) ? "filled" : "filled"}
+                color={parseBoolean(design.repeatable) ? "success" : "warning"}
+                sx={{ fontWeight: 500 }}
+              />
+            </Tooltip>
+          )}
+        </Box>
       </Box>
     </Box>
   );
 }
 
 export default function FlashPage() {
+  const router = useRouter();
+  const flashContext = useFlash();
   const [designs, setDesigns] = useState<FlashDesign[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [selectedDesign, setSelectedDesign] = useState<FlashDesign | null>(
+    null,
+  );
+  const [modalOpen, setModalOpen] = useState(false);
+  const [reserveLoading, setReserveLoading] = useState(false);
+  const [reserveError, setReserveError] = useState<string | null>(null);
 
   const fetchDesigns = async () => {
     try {
@@ -127,8 +179,10 @@ export default function FlashPage() {
 
       if (Array.isArray(data)) {
         flashDesigns = data.filter((item: any) => {
-          const hasImage = item.src || item.b64 || item.base64;
-          const isValid = item && item.id && item.price !== undefined && hasImage;
+          // Only use src (URL)
+          const hasImage = item.src;
+          const isValid =
+            item && item.id && item.price !== undefined && hasImage;
           if (!isValid) {
             console.log("Filtered out item:", item);
           }
@@ -136,16 +190,21 @@ export default function FlashPage() {
         });
       } else if (data && typeof data === "object") {
         // If it's a single object, check if it has the right properties
-        const hasImage = data.src || data.b64 || data.base64;
+        const hasImage = data.src;
         if (data.id && data.price !== undefined && hasImage) {
           flashDesigns = [data];
         } else {
           // Maybe it's wrapped in an array property
-          const arrayProp = Object.values(data).find(val => Array.isArray(val));
+          const arrayProp = Object.values(data).find((val) =>
+            Array.isArray(val),
+          );
           if (arrayProp) {
             flashDesigns = (arrayProp as any[]).filter((item: any) => {
-              const itemHasImage = item.src || item.b64 || item.base64;
-              return item && item.id && item.price !== undefined && itemHasImage;
+              // Only use src (URL)
+              const itemHasImage = item.src;
+              return (
+                item && item.id && item.price !== undefined && itemHasImage
+              );
             });
           }
         }
@@ -166,20 +225,104 @@ export default function FlashPage() {
     fetchDesigns();
   }, []);
 
+  const handleOpenModal = (design: FlashDesign) => {
+    setSelectedDesign(design);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setSelectedDesign(null);
+  };
+
+  const handleBooking = async () => {
+    if (!selectedDesign) return;
+
+    setReserveLoading(true);
+    setReserveError(null);
+
+    try {
+      // Skip reservation for repeatable designs - they can be booked multiple times
+      const isRepeatable = parseBoolean(selectedDesign.repeatable);
+      if (!isRepeatable) {
+        // Only reserve limited flash designs
+        console.log(selectedDesign.id);
+        const reserveResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_FORM_ENDPOINT}`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            type: "reserve",
+            flashId: selectedDesign.id,
+            username: process.env.NEXT_PUBLIC_ARTIST_USERNAME,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+        let reserveRes = await reserveResponse.json();
+
+        // Handle backend error wrapped in body property
+        if (reserveRes.body && typeof reserveRes.body === "string") {
+          reserveRes = JSON.parse(reserveRes.body);
+        }
+
+        // Check if reserve failed
+        if (reserveRes.error) {
+          setReserveError(
+            reserveRes.message ||
+              "This flash design is no longer available. Please choose another.",
+          );
+          setReserveLoading(false);
+          return;
+        }
+
+        // Check if reserve succeeded
+        if (reserveRes.success) {
+          console.log("Flash reserved:", reserveRes.message);
+          // Flash is now reserved for 15 minutes - proceed to booking
+        } else if (!reserveRes.success && !reserveRes.error) {
+          // Unexpected response format - likely another user has claimed this flash
+          setReserveError(
+            "Someone else has claimed this flash design. Please choose another design.",
+          );
+          setReserveLoading(false);
+          return;
+        }
+      }
+
+      // Success - store the selected flash design in context and navigate
+      // (skipped reserve for repeatable, or reserve succeeded for limited)
+      if (flashContext) {
+        flashContext.setSelectedFlash(selectedDesign);
+      }
+      setReserveLoading(false);
+      router.push(`/booking`);
+    } catch (err) {
+      console.error("Error reserving flash:", err);
+      setReserveError("Failed to reserve flash. Please try again.");
+      setReserveLoading(false);
+    }
+  };
+
   if (designs === null && !error) {
     return <Loading />;
   }
 
   return (
     <Stack
-      direction="column"
-      alignItems="center"
+      direction='column'
+      alignItems='center'
       sx={{
         width: "100%",
         minHeight: "100vh",
         padding: "24px",
       }}>
-      <Typography variant="h3" sx={{ marginBottom: "32px", fontWeight: "bold" }}>
+      <Typography
+        variant='h3'
+        sx={{ marginBottom: "32px", fontWeight: "bold" }}>
         Flash Designs
       </Typography>
 
@@ -197,7 +340,7 @@ export default function FlashPage() {
           }}>
           <Typography>{error}</Typography>
           <Button
-            variant="contained"
+            variant='contained'
             onClick={fetchDesigns}
             sx={{ marginTop: "12px" }}
             disabled={isRetrying}>
@@ -214,7 +357,7 @@ export default function FlashPage() {
             width: "100%",
             maxWidth: "600px",
           }}>
-          <Typography variant="h6">
+          <Typography variant='h6'>
             No flash designs available at the moment.
           </Typography>
           <Typography sx={{ marginTop: "12px", color: "gray" }}>
@@ -238,10 +381,23 @@ export default function FlashPage() {
             maxWidth: "1200px",
           }}>
           {designs.map((design) => (
-            <FlashDesignCard key={design.id} design={design} />
+            <FlashDesignCard
+              key={design.id}
+              design={design}
+              onOpenModal={handleOpenModal}
+            />
           ))}
         </Box>
       )}
+
+      <FlashDetailsModal
+        open={modalOpen}
+        design={selectedDesign}
+        onClose={handleCloseModal}
+        onBook={handleBooking}
+        isLoading={reserveLoading}
+        error={reserveError}
+      />
     </Stack>
   );
 }

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useFlash } from "@/contexts/FlashContext";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -86,11 +86,14 @@ async function getArtistData() {
 }
 
 export default function BookingForm() {
+  const router = useRouter();
   const flashContext = useFlash();
   const [artist, setArtist] = React.useState<Artist | null>(null);
+  const [flashUnavailable, setFlashUnavailable] = useState<boolean>(false);
   const [flashId, setFlashId] = useState<string | null>(null);
-  const [flashPrice, setFlashPrice] = useState<number | null>(null);
+  const [flashPrice, setFlashPrice] = useState<number | string | null>(null);
   const [flashImageUrl, setFlashImageUrl] = useState<string | null>(null);
+  const [flashDescription, setFlashDescription] = useState<string | null>(null);
 
   useEffect(() => {
     getArtistData().then((data) => setArtist(data));
@@ -102,14 +105,12 @@ export default function BookingForm() {
 
     if (selectedFlash) {
       console.log("Flash design selected:", selectedFlash.id);
-      const imageData = selectedFlash.b64 || selectedFlash.base64 || selectedFlash.src;
-      const price = typeof selectedFlash.price === 'string'
-        ? parseFloat(selectedFlash.price)
-        : selectedFlash.price;
+      const imageData = selectedFlash.src;
 
       setFlashId(selectedFlash.id);
       setFlashImageUrl(imageData || null);
-      setFlashPrice(price);
+      setFlashPrice(selectedFlash.price);
+      setFlashDescription(selectedFlash.description || null);
     } else {
       console.log("No flash design selected");
     }
@@ -129,6 +130,7 @@ export default function BookingForm() {
     preferredDates: "",
     isConsultation: false,
   });
+  const [flashQuestions, setFlashQuestions] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [netErr, setNetErr] = useState<boolean>(false);
   const [filesToUp, setFilesToUp] = useState<b64FileList[]>([]);
@@ -139,38 +141,45 @@ export default function BookingForm() {
   const [emailConfirm, setEmailConfirm] = useState<string>("");
   const [priceVal, setPriceVal] = useState([600, 800]);
 
+  interface FieldError {
+    [key: string]: string;
+  }
+  const [fieldErrors, setFieldErrors] = useState<FieldError>({});
+  const [serverError, setServerError] = useState<string | null>(null);
+  const emailFieldRef = React.useRef<HTMLDivElement>(null);
+
   const minDistance = 50;
 
   const minFiles = 1;
 
   // Add flash image as reference when flash context is initialized
   useEffect(() => {
-    if (flashImageUrl && flashPrice !== null && typeof flashPrice === 'number') {
+    if (flashImageUrl && flashPrice !== null) {
       console.log("Adding flash image, URL length:", flashImageUrl?.length);
 
-      // Set the idea field to the flash description
-      setForm((prev) => ({
-        ...prev,
-        idea: `Set flash piece: $${flashPrice.toFixed(2)}`,
-      }));
-
-      // Set the budget to the flash price
-      setPriceVal([flashPrice, flashPrice]);
-
       // Add flash image as a reference image with isFlash flag
-      // Handle both base64 strings and URLs
+      // Handle both URLs and base64 strings
       let imageDataUrl = flashImageUrl;
 
       // If it's a base64 string without data URL prefix, add it
-      if (flashImageUrl && !flashImageUrl.startsWith("data:")) {
+      if (
+        flashImageUrl &&
+        !flashImageUrl.startsWith("data:") &&
+        !flashImageUrl.startsWith("http")
+      ) {
         // Assume it's base64, add data URL prefix
         imageDataUrl = `data:image/png;base64,${flashImageUrl}`;
-        console.log("Converting base64 to data URL, length:", imageDataUrl.length);
+        console.log(
+          "Converting base64 to data URL, length:",
+          imageDataUrl.length,
+        );
+      } else if (flashImageUrl?.startsWith("http")) {
+        console.log("Using object image URL directly");
       }
 
       // Add to filesToUp immediately with a default size, then update when loaded
       setFilesToUp((prev) => {
-        const flashImageExists = prev.some(item => item.isFlash);
+        const flashImageExists = prev.some((item) => item.isFlash);
         if (flashImageExists) {
           console.log("Flash image already in filesToUp, skipping");
           return prev;
@@ -191,12 +200,17 @@ export default function BookingForm() {
       // Load the image to get actual dimensions
       const img = new window.Image();
       img.onload = () => {
-        console.log("Flash image loaded, dimensions:", img.width, "x", img.height);
+        console.log(
+          "Flash image loaded, dimensions:",
+          img.width,
+          "x",
+          img.height,
+        );
         // Update filesToUp with actual dimensions
         setFilesToUp((prev) =>
           prev.map((item) =>
-            item.isFlash ? { ...item, w: img.width, h: img.height } : item
-          )
+            item.isFlash ? { ...item, w: img.width, h: img.height } : item,
+          ),
         );
       };
       img.onerror = () => {
@@ -208,9 +222,27 @@ export default function BookingForm() {
     }
   }, [flashImageUrl, flashPrice]);
 
+  // Update idea field when flash description or questions change
+  useEffect(() => {
+    if (flashPrice !== null && flashId) {
+      let ideaText = `Flash piece: $${flashPrice}`;
+      if (flashDescription) {
+        ideaText = `${flashDescription}\n\nFlash price: ${flashPrice}`;
+      }
+      if (flashQuestions) {
+        ideaText += `\n\n=== Client Questions ===\n${flashQuestions}`;
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        idea: ideaText,
+      }));
+    }
+  }, [flashPrice, flashDescription, flashQuestions, flashId]);
+
   const handleBudgetChange = (
     newValue: number | number[],
-    activeThumb: number
+    activeThumb: number,
   ) => {
     if (!Array.isArray(newValue)) {
       return;
@@ -242,6 +274,8 @@ export default function BookingForm() {
 
   const submitForm = async () => {
     setLoading(true);
+    setServerError(null);
+    setFieldErrors({});
 
     // Validate flash image is still present if booking flash
     if (flashId && !filesToUp.some((file) => file.isFlash)) {
@@ -254,7 +288,7 @@ export default function BookingForm() {
       setShowErrors(true);
       setLoading(false);
       return setRefErrorMsg(
-        `Please upload ${minFiles} or more reference images`
+        `Please upload ${minFiles} or more reference images`,
       );
     } else if (
       !artist ||
@@ -272,79 +306,176 @@ export default function BookingForm() {
       setLoading(false);
       return setShowErrors(true);
     } else {
-      // Use flash price if booking flash, otherwise use price range
-      const budget = flashPrice !== null ? [flashPrice, flashPrice] : priceVal;
+      const budget = flashPrice !== null ? [0, 0] : priceVal;
 
-      await fetch(`${process.env.NEXT_PUBLIC_FORM_ENDPOINT}`, {
-        method: "POST",
-        body: JSON.stringify({
-          type: "post",
-          form: { ...form, budget },
-          flashId: flashId || undefined,
-          artistId: artist.sub,
-          username: process.env.NEXT_PUBLIC_ARTIST_USERNAME,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-        .then((json) => json.json())
-        .then(async (res) => {
-          await Promise.all(
-            filesToUp.map((obj, i) => {
-              return new Promise(async (resolve, reject) => {
-                return await fetch(`${process.env.NEXT_PUBLIC_FORM_ENDPOINT}`, {
-                  method: "POST",
-                  body: JSON.stringify({
-                    type: "img",
-                    image: obj.b64.split(",")[1],
-                    i: i,
-                    customerId: res.customerId,
-                    artistId: artist.sub,
-                  }),
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                })
-                  .then((json) => json.json())
-                  .then((res) => {
-                    resolve(res);
-                  })
-                  .catch((err) => {
-                    reject(err);
-                  });
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_FORM_ENDPOINT}`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              type: "post",
+              form: { ...form, budget },
+              flashId: flashId || undefined,
+              artistId: artist.sub,
+              username: process.env.NEXT_PUBLIC_ARTIST_USERNAME,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          },
+        );
+
+        let res = await response.json();
+
+        // Handle backend error wrapped in body property
+        if (res.body && typeof res.body === "string") {
+          res = JSON.parse(res.body);
+        }
+
+        console.log("Booking response:", { statusCode: response.status, res });
+
+        // Backend returns HTTP 200 for all responses, check res.error to detect errors
+        if (res.error) {
+          setLoading(false);
+
+          // Map backend errors to user-friendly messages with field targeting
+          if (res.error === "Invalid email") {
+            setFieldErrors({ email: res.message });
+            setTimeout(() => {
+              emailFieldRef.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
               });
-            })
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ).then((res: any) => {
+            }, 0);
+            return;
+          }
+          if (res.error === "Unreachable email") {
+            setFieldErrors({ email: res.message });
+            setTimeout(() => {
+              emailFieldRef.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              });
+            }, 0);
+            return;
+          }
+          if (res.error === "Flash design unavailable") {
+            setLoading(false);
+            setFlashUnavailable(true);
+            setServerError(res.message);
+            // Reset flash selection since it's no longer available
+            setFlashId(null);
+            setFlashPrice(null);
+            setFlashImageUrl(null);
+            // Redirect to flash book after short delay to show error
+            setTimeout(() => {
+              router.push("/flash");
+            }, 2000);
+            return;
+          }
+          if (res.error === "Image processing failed") {
+            setServerError(res.message);
+            return;
+          }
+          if (res.error === "Booking creation failed") {
+            setServerError(res.message);
+            return;
+          }
+          if (res.error === "Email delivery failed") {
+            // Still show success but inform user about email issue
+            setServerError(res.message);
+            setIsSubmitted(true);
+            return;
+          }
+          if (res.error === "Booking cleanup failed") {
+            setServerError(res.message);
+            return;
+          }
+          // Handles "Unexpected error" and any other unhandled backend errors
+          setServerError(
+            res.message ||
+              "An error occurred while processing your booking. Please try again.",
+          );
+          return;
+        }
+
+        // Booking creation succeeded, now upload images
+        if (!res.customerId) {
+          console.error("Missing customerId in response:", res);
+          setServerError(
+            "Unexpected response from server. Please try again or contact support.",
+          );
+          setLoading(false);
+          return;
+        }
+
+        await Promise.all(
+          filesToUp.map((obj, i) => {
+            if (obj.isFlash) {
+              return Promise.resolve({ skipped: true });
+            }
+
+            return new Promise(async (resolve, reject) => {
+              return await fetch(`${process.env.NEXT_PUBLIC_FORM_ENDPOINT}`, {
+                method: "POST",
+                body: JSON.stringify({
+                  type: "img",
+                  image: obj.b64.split(",")[1],
+                  i: i,
+                  customerId: res.customerId,
+                  artistId: artist.sub,
+                }),
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              })
+                .then((json) => json.json())
+                .then((res) => {
+                  resolve(res);
+                })
+                .catch((err) => {
+                  reject(err);
+                });
+            });
+          }),
+        )
+          .then((imageResults: any) => {
             let hasError = false;
-            console.log(res);
-            res.forEach((obj: ImageUploadReturnType) => {
-              if (obj.$metadata.httpStatusCode !== 200) {
-                setLoading(false);
-                setNetErr(true);
-                setIsSubmitted(false);
+            imageResults.forEach((obj: ImageUploadReturnType) => {
+              if (obj.skipped) return;
+              if (obj.$metadata?.httpStatusCode !== 200) {
                 hasError = true;
               }
             });
-            if (!hasError) {
-              setLoading(false);
-              setIsSubmitted(true);
+
+            setLoading(false);
+            if (hasError) {
+              setServerError(
+                "Some reference images failed to upload, but your booking was created.",
+              );
             }
+            setIsSubmitted(true);
+          })
+          .catch((err) => {
+            setLoading(false);
+            setServerError(
+              "Failed to upload reference images, but your booking was created.",
+            );
+            setIsSubmitted(true);
           });
-        })
-        .catch((err) => {
-          setLoading(false);
-          setNetErr(true);
-        });
+      } catch (err) {
+        setLoading(false);
+        setServerError(
+          "Network error. Please check your connection and try again.",
+        );
+      }
     }
-    setLoading(false);
-    setIsSubmitted(true);
   };
 
   const handleFileInput = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    isFlash: boolean | undefined
+    isFlash: boolean | undefined,
   ) => {
     if (e.target.files !== null) {
       Promise.all(
@@ -352,10 +483,10 @@ export default function BookingForm() {
           if (e.target.files !== null) {
             return getBlobObj(
               e.target.files[parseInt(key, 10)],
-              isFlash ?? false
+              isFlash ?? false,
             );
           }
-        })
+        }),
       ).then(async (r) => {
         setFilesToUp((p) => {
           p = p.concat(r as b64FileList[]);
@@ -390,7 +521,12 @@ export default function BookingForm() {
             width: "95%",
             alignItems: "center",
           }}>
-          <Modal open={netErr && !loading} onClose={() => setNetErr(false)}>
+          <Modal
+            open={(netErr || Boolean(serverError)) && !loading}
+            onClose={() => {
+              setNetErr(false);
+              setServerError(null);
+            }}>
             <Box
               style={{
                 position: "absolute",
@@ -408,7 +544,9 @@ export default function BookingForm() {
                   color: "black",
                   lineHeight: "35px",
                 }}>
-                Something went wrong!
+                {flashUnavailable
+                  ? "Flash Design Unavailable"
+                  : "Something went wrong!"}
               </h2>
               <h3
                 style={{
@@ -416,13 +554,50 @@ export default function BookingForm() {
                   color: "black",
                   lineHeight: "30px",
                 }}>
-                Please try to submit the form again, if there are continued
-                issues please call the shop at{" "}
-                <a
-                  style={{ color: "#181e96" }}
-                  href={`tel:${process.env.NEXT_PUBLIC_ARTIST_SHOP_PHONE}`}>
-                  {process.env.NEXT_PUBLIC_ARTIST_SHOP_PHONE}
-                </a>
+                {serverError ? (
+                  <>
+                    {serverError}
+                    {flashUnavailable && (
+                      <p
+                        style={{
+                          fontSize: "14px",
+                          marginTop: "20px",
+                          color: "#666",
+                        }}>
+                        Redirecting you back to the flash book...
+                      </p>
+                    )}
+                    {!serverError.includes("Network error") &&
+                      !flashUnavailable && (
+                        <>
+                          <p
+                            style={{
+                              fontSize: "14px",
+                              marginTop: "20px",
+                              color: "#666",
+                            }}>
+                            If you continue to have issues, please call the shop
+                            at
+                          </p>
+                          <a
+                            style={{ color: "#181e96" }}
+                            href={`tel:${process.env.NEXT_PUBLIC_ARTIST_SHOP_PHONE}`}>
+                            {process.env.NEXT_PUBLIC_ARTIST_SHOP_PHONE}
+                          </a>
+                        </>
+                      )}
+                  </>
+                ) : (
+                  <>
+                    Please try to submit the form again, if there are continued
+                    issues please call the shop at{" "}
+                    <a
+                      style={{ color: "#181e96" }}
+                      href={`tel:${process.env.NEXT_PUBLIC_ARTIST_SHOP_PHONE}`}>
+                      {process.env.NEXT_PUBLIC_ARTIST_SHOP_PHONE}
+                    </a>
+                  </>
+                )}
               </h3>
             </Box>
           </Modal>
@@ -563,6 +738,7 @@ export default function BookingForm() {
               />
             </Stack>
             <Stack
+              ref={emailFieldRef}
               direction='row'
               justifyContent={"space-between"}
               alignItems={"center"}
@@ -570,13 +746,24 @@ export default function BookingForm() {
               sx={{ width: "100%" }}>
               <TextField
                 required
-                error={!form.email && showErrors}
+                error={
+                  (!form.email && showErrors) || Boolean(fieldErrors.email)
+                }
+                helperText={fieldErrors.email}
                 value={form.email}
                 onChange={(e) => {
                   setForm((p) => {
                     p.email = e.target.value;
                     return { ...p };
                   });
+                  // Clear error when user starts correcting
+                  if (fieldErrors.email) {
+                    setFieldErrors((prev) => {
+                      const updated = { ...prev };
+                      delete updated.email;
+                      return updated;
+                    });
+                  }
                 }}
                 fullWidth
                 type='email'
@@ -818,6 +1005,27 @@ export default function BookingForm() {
               )}
             </Stack>
 
+            {flashId && (
+              <Stack
+                sx={{
+                  width: "100%",
+                }}>
+                <TextField
+                  placeholder='Ask any questions about the design, placement, size, etc.'
+                  value={flashQuestions}
+                  onChange={(e) => {
+                    setFlashQuestions(e.target.value);
+                  }}
+                  multiline
+                  fullWidth
+                  rows={4}
+                  label='Questions for the artist'
+                  variant='outlined'
+                  helperText='(Optional) Ask any questions about your flash tattoo'
+                />
+              </Stack>
+            )}
+
             <Stack
               justifyContent={"center"}
               alignItems={"center"}
@@ -841,7 +1049,7 @@ export default function BookingForm() {
               {flashId ? (
                 <Box sx={{ marginTop: "20px", textAlign: "center" }}>
                   <h3 style={{ marginBottom: "0px", marginTop: "0px" }}>
-                    ${flashPrice?.toFixed(2)}
+                    {flashPrice}
                   </h3>
                   <FormHelperText sx={{ marginTop: "8px" }}>
                     This booking is for a flash design - price is set
@@ -908,20 +1116,20 @@ export default function BookingForm() {
                       padding: "5%",
                     }
                   : filesToUp.length >= minFiles
-                  ? {
-                      width: "100%",
-                      minHeight: "100px",
-                      flexWrap: "wrap",
-                      padding: "5%",
-                      border: "2px dashed #5bb450",
-                    }
-                  : {
-                      width: "100%",
-                      minHeight: "100px",
-                      flexWrap: "wrap",
-                      padding: "5%",
-                      border: "2px dashed #d32f2f",
-                    }
+                    ? {
+                        width: "100%",
+                        minHeight: "100px",
+                        flexWrap: "wrap",
+                        padding: "5%",
+                        border: "2px dashed #5bb450",
+                      }
+                    : {
+                        width: "100%",
+                        minHeight: "100px",
+                        flexWrap: "wrap",
+                        padding: "5%",
+                        border: "2px dashed #d32f2f",
+                      }
               }>
               {filesToUp && filesToUp.length > 0 ? (
                 <>
@@ -1081,6 +1289,7 @@ export default function BookingForm() {
             </Stack>
             <Button
               disabled={
+                flashUnavailable ||
                 filesToUp.length < minFiles ||
                 !form.firstName ||
                 !form.lastName ||
