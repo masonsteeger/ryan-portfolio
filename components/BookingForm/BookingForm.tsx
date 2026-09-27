@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useFlash } from "@/contexts/FlashContext";
 import Box from "@mui/material/Box";
@@ -23,6 +23,10 @@ import FormHelperText from "@mui/material/FormHelperText";
 import ListSubheader from "@mui/material/ListSubheader";
 import Slider from "@mui/material/Slider";
 import Modal from "@mui/material/Modal";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { PatternFormat } from "react-number-format";
 import Image from "next/image";
@@ -32,16 +36,27 @@ import { b64FileList, Day, Form } from "@/types";
 import { CircularProgress, Typography } from "@mui/material";
 import update from "immutability-helper";
 import Container from "../Containers/Container";
+import CountdownTimer from "../CountdownTimer/CountdownTimer";
 
 interface ImageUploadReturnType {
   $metadata: {
     httpStatusCode: number;
   };
+  skipped?: boolean;
 }
 
 interface Artist {
   sub: string;
   workingDays: Day[];
+}
+
+const RESERVATION_WINDOW_MS = 15 * 1000;
+
+// Helper to convert string "true"/"false" to boolean
+function parseBoolean(value: any): boolean | undefined {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") return value.toLowerCase() === "true";
+  return undefined;
 }
 
 function Loading() {
@@ -94,6 +109,9 @@ export default function BookingForm() {
   const [flashPrice, setFlashPrice] = useState<number | string | null>(null);
   const [flashImageUrl, setFlashImageUrl] = useState<string | null>(null);
   const [flashDescription, setFlashDescription] = useState<string | null>(null);
+  const [reservationDialogOpen, setReservationDialogOpen] = useState(false);
+  const [isLimitedFlash, setIsLimitedFlash] = useState(false);
+  const reservationTimerStarted = useRef(false);
 
   useEffect(() => {
     getArtistData().then((data) => setArtist(data));
@@ -114,6 +132,43 @@ export default function BookingForm() {
     } else {
       console.log("No flash design selected");
     }
+  }, [flashContext?.selectedFlash]);
+
+  // If this flash design was reserved (non-repeatable), warn the user their
+  // 15-minute hold started and force a fresh reload when it expires.
+  useEffect(() => {
+    const selectedFlash = flashContext?.selectedFlash;
+    if (!selectedFlash || reservationTimerStarted.current) return;
+    if (parseBoolean(selectedFlash.repeatable)) return;
+
+    reservationTimerStarted.current = true;
+    setReservationDialogOpen(true);
+    setIsLimitedFlash(true);
+    const timeout = setTimeout(() => {
+      setForm({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        overEighteen: true,
+        color: "",
+        placement: [],
+        size: "",
+        idea: "",
+        preferredDay: [],
+        preferredDates: "",
+        isConsultation: false,
+      });
+      flashContext.setSelectedFlash(null);
+      router.push("/");
+    }, RESERVATION_WINDOW_MS);
+
+    return () => {
+      if (reservationTimerStarted.current) {
+        clearTimeout(timeout);
+        reservationTimerStarted.current = false;
+      }
+    };
   }, [flashContext?.selectedFlash]);
 
   const [form, setForm] = useState<Form>({
@@ -225,7 +280,7 @@ export default function BookingForm() {
   // Update idea field when flash description or questions change
   useEffect(() => {
     if (flashPrice !== null && flashId) {
-      let ideaText = `Flash piece: $${flashPrice}`;
+      let ideaText = `Flash piece: ${flashPrice}`;
       if (flashDescription) {
         ideaText = `${flashDescription}\n\nFlash price: ${flashPrice}`;
       }
@@ -601,6 +656,31 @@ export default function BookingForm() {
               </h3>
             </Box>
           </Modal>
+
+          <Dialog
+            open={reservationDialogOpen}
+            onClose={() => setReservationDialogOpen(false)}
+            maxWidth='sm'
+            fullWidth>
+            <DialogTitle sx={{ fontWeight: "bold" }}>
+              Design Reserved!
+            </DialogTitle>
+            <DialogContent>
+              <Typography>
+                Please complete this form within the allotted time, or your
+                reservation will be released and this page will reset.
+              </Typography>
+              <CountdownTimer timeValue={RESERVATION_WINDOW_MS} />
+            </DialogContent>
+            <DialogActions sx={{ padding: "16px 24px" }}>
+              <Button
+                onClick={() => setReservationDialogOpen(false)}
+                variant='contained'
+                fullWidth>
+                Got it
+              </Button>
+            </DialogActions>
+          </Dialog>
           <Box sx={{ width: "90%" }}>
             <ButtonGroup
               size='large'
@@ -1331,6 +1411,21 @@ export default function BookingForm() {
             </Stack>
           </Stack>
         </Container>
+        {isLimitedFlash && (
+          <Box
+            style={{
+              position: "fixed",
+              backgroundColor: "white",
+              bottom: 10,
+              right: 30,
+              padding: "14px",
+              zIndex: 1000,
+              borderRadius: "6px",
+              border: "6px solid #857fff",
+            }}>
+            <CountdownTimer timeValue={RESERVATION_WINDOW_MS} />
+          </Box>
+        )}
       </Stack>
     );
   } else {
