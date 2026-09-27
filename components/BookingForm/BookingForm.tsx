@@ -37,6 +37,7 @@ import { CircularProgress, Typography } from "@mui/material";
 import update from "immutability-helper";
 import Container from "../Containers/Container";
 import CountdownTimer from "../CountdownTimer/CountdownTimer";
+import parseBoolean from "@/utils/parseBoolean";
 
 interface ImageUploadReturnType {
   $metadata: {
@@ -51,13 +52,6 @@ interface Artist {
 }
 
 const RESERVATION_WINDOW_MS = 15 * 1000;
-
-// Helper to convert string "true"/"false" to boolean
-function parseBoolean(value: any): boolean | undefined {
-  if (typeof value === "boolean") return value;
-  if (typeof value === "string") return value.toLowerCase() === "true";
-  return undefined;
-}
 
 function Loading() {
   return (
@@ -495,14 +489,16 @@ export default function BookingForm() {
             });
           }),
         )
-          .then((imageResults: any) => {
+          .then((imageResults: unknown[]) => {
             let hasError = false;
-            imageResults.forEach((obj: ImageUploadReturnType) => {
-              if (obj.skipped) return;
-              if (obj.$metadata?.httpStatusCode !== 200) {
-                hasError = true;
-              }
-            });
+            (imageResults as ImageUploadReturnType[]).forEach(
+              (obj: ImageUploadReturnType) => {
+                if (obj.skipped) return;
+                if (obj.$metadata?.httpStatusCode !== 200) {
+                  hasError = true;
+                }
+              },
+            );
 
             setLoading(false);
             if (hasError) {
