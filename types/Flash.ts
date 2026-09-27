@@ -5,7 +5,7 @@ export type FlashDesign = {
   b64?: string;
   base64?: string;
   description?: string;
-  repeatable?: boolean;
+  repeatable?: string;
 };
 
 export type FlashContext = {

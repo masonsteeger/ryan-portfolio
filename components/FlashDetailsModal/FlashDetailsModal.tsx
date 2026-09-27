@@ -14,13 +14,7 @@ import {
 import Image from "next/image";
 import { FlashDesign } from "@/types/Flash";
 import classes from "./FlashDetailsModal.module.scss";
-
-// Helper to convert string "true"/"false" to boolean
-function parseBoolean(value: any): boolean | undefined {
-  if (typeof value === 'boolean') return value;
-  if (typeof value === 'string') return value.toLowerCase() === 'true';
-  return undefined;
-}
+import parseBoolean from "@/utils/parseBoolean";
 
 interface FlashDetailsModalProps {
   open: boolean;
@@ -47,7 +41,7 @@ export default function FlashDetailsModal({
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="sm"
+      maxWidth='sm'
       fullWidth
       PaperProps={{
         sx: {
@@ -84,7 +78,7 @@ export default function FlashDetailsModal({
 
           <Box>
             <Typography
-              variant="h5"
+              variant='h5'
               sx={{
                 fontWeight: "bold",
                 marginBottom: "8px",
@@ -93,8 +87,8 @@ export default function FlashDetailsModal({
             </Typography>
             {design.description && (
               <Typography
-                variant="body2"
-                color="textSecondary"
+                variant='body2'
+                color='textSecondary'
                 sx={{
                   marginBottom: "16px",
                   lineHeight: 1.6,
@@ -103,9 +97,15 @@ export default function FlashDetailsModal({
               </Typography>
             )}
             <Box sx={{ marginBottom: "16px" }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 2,
+                }}>
                 <Typography
-                  variant="h6"
+                  variant='h6'
                   sx={{
                     color: "#181e96",
                     fontWeight: "bold",
@@ -114,23 +114,35 @@ export default function FlashDetailsModal({
                 </Typography>
                 {parseBoolean(design.repeatable) !== undefined && (
                   <Tooltip
-                    title={parseBoolean(design.repeatable) ? 'This tattoo design can be repeated as many times as desired' : 'This flash image is only available for one booking'}
+                    title={
+                      parseBoolean(design.repeatable)
+                        ? "This tattoo design can be repeated as many times as desired"
+                        : "This flash image is only available for one booking"
+                    }
                     placement='top'
                     arrow
                     slotProps={{
                       tooltip: {
                         sx: {
-                          fontSize: '0.95rem',
-                          backgroundColor: 'rgba(0, 0, 0, 0.87)',
-                          padding: '8px 12px',
+                          fontSize: "0.95rem",
+                          backgroundColor: "rgba(0, 0, 0, 0.87)",
+                          padding: "8px 12px",
                         },
                       },
                     }}>
                     <Chip
-                      label={parseBoolean(design.repeatable) ? '✓ Repeatable' : '⚠ Limited'}
+                      label={
+                        parseBoolean(design.repeatable)
+                          ? "✓ Repeatable"
+                          : "⚠ Limited"
+                      }
                       size='small'
-                      variant={parseBoolean(design.repeatable) ? 'filled' : 'filled'}
-                      color={parseBoolean(design.repeatable) ? 'success' : 'warning'}
+                      variant={
+                        parseBoolean(design.repeatable) ? "filled" : "filled"
+                      }
+                      color={
+                        parseBoolean(design.repeatable) ? "success" : "warning"
+                      }
                       sx={{ fontWeight: 500 }}
                     />
                   </Tooltip>
@@ -149,7 +161,7 @@ export default function FlashDetailsModal({
             color: "#d32f2f",
             borderTop: "1px solid #ef5350",
           }}>
-          <Typography variant="body2">{error}</Typography>
+          <Typography variant='body2'>{error}</Typography>
         </Box>
       )}
 
@@ -158,13 +170,13 @@ export default function FlashDetailsModal({
           padding: "16px 24px",
           gap: "12px",
         }}>
-        <Button onClick={onClose} variant="outlined" disabled={isLoading}>
+        <Button onClick={onClose} variant='outlined' disabled={isLoading}>
           Cancel
         </Button>
         <Button
           onClick={onBook}
-          variant="contained"
-          color="primary"
+          variant='contained'
+          color='primary'
           disabled={isLoading}>
           {isLoading ? "Reserving..." : "Proceed to Booking"}
         </Button>

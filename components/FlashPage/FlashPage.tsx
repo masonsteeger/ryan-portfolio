@@ -15,6 +15,7 @@ import { FlashDesign } from "@/types/Flash";
 import { useFlash } from "@/contexts/FlashContext";
 import FlashDetailsModal from "@/components/FlashDetailsModal/FlashDetailsModal";
 import classes from "./FlashPage.module.scss";
+import parseBoolean from "@/utils/parseBoolean";
 
 async function getFlashDesigns() {
   try {
@@ -51,13 +52,6 @@ function Loading() {
       <CircularProgress color='secondary' size={60} />
     </Box>
   );
-}
-
-// Helper to convert string "true"/"false" to boolean
-function parseBoolean(value: any): boolean | undefined {
-  if (typeof value === "boolean") return value;
-  if (typeof value === "string") return value.toLowerCase() === "true";
-  return undefined;
 }
 
 interface FlashDesignCardProps {
@@ -178,7 +172,7 @@ export default function FlashPage() {
       let flashDesigns: FlashDesign[] = [];
 
       if (Array.isArray(data)) {
-        flashDesigns = data.filter((item: any) => {
+        flashDesigns = data.filter((item: FlashDesign) => {
           // Only use src (URL)
           const hasImage = item.src;
           const isValid =
@@ -199,13 +193,15 @@ export default function FlashPage() {
             Array.isArray(val),
           );
           if (arrayProp) {
-            flashDesigns = (arrayProp as any[]).filter((item: any) => {
-              // Only use src (URL)
-              const itemHasImage = item.src;
-              return (
-                item && item.id && item.price !== undefined && itemHasImage
-              );
-            });
+            flashDesigns = (arrayProp as FlashDesign[]).filter(
+              (item: FlashDesign) => {
+                // Only use src (URL)
+                const itemHasImage = item.src;
+                return (
+                  item && item.id && item.price !== undefined && itemHasImage
+                );
+              },
+            );
           }
         }
       }
@@ -248,19 +244,19 @@ export default function FlashPage() {
         // Only reserve limited flash designs
         console.log(selectedDesign.id);
         const reserveResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_FORM_ENDPOINT}`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            type: "reserve",
-            flashId: selectedDesign.id,
-            username: process.env.NEXT_PUBLIC_ARTIST_USERNAME,
-          }),
-          headers: {
-            "Content-Type": "application/json",
+          `${process.env.NEXT_PUBLIC_FORM_ENDPOINT}`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              type: "reserve",
+              flashId: selectedDesign.id,
+              username: process.env.NEXT_PUBLIC_ARTIST_USERNAME,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
           },
-        },
-      );
+        );
 
         let reserveRes = await reserveResponse.json();
 
