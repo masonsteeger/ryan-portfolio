@@ -5,6 +5,7 @@ import Navigation from "@/components/Navigation/Navigation";
 import ClientThemeProvider from "./ClientThemeProvider";
 import LoadingScreen from "@/components/LoadingScreen/LoadingScreen";
 import ScrollToTop from "./ScrollToTop";
+import { FlashContextProvider } from "@/contexts/FlashContext";
 
 const quicksand = localFont({
   src: [
@@ -91,14 +92,16 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <ClientThemeProvider>
-        <body className={`${josefinSans.variable} ${quicksand.variable}`}>
-          <div id={"site-container"}>
-            <ScrollToTop />
-            <Navigation />
-            <div id={"page"}>{children}</div>
-            <LoadingScreen />
-          </div>
-        </body>
+        <FlashContextProvider>
+          <body className={`${josefinSans.variable} ${quicksand.variable}`}>
+            <div id={"site-container"}>
+              <ScrollToTop />
+              <Navigation />
+              <div id={"page"}>{children}</div>
+              <LoadingScreen />
+            </div>
+          </body>
+        </FlashContextProvider>
       </ClientThemeProvider>
     </html>
   );

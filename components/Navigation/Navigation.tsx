@@ -19,6 +19,9 @@ export default function MainNavigation() {
           <Link href='/gallery'>
             <li onClick={() => setMenuOpen(false)}>Gallery</li>
           </Link>
+          <Link href='/flash'>
+            <li onClick={() => setMenuOpen(false)}>Flash</li>
+          </Link>
           <Link href='/booking'>
             <li onClick={() => setMenuOpen(false)}>Booking</li>
           </Link>
@@ -36,8 +39,6 @@ export default function MainNavigation() {
     []
   );
 
-  console.log(show);
-
   return (
     <>
       <header
@@ -53,6 +54,8 @@ export default function MainNavigation() {
               alt='Ryan Leach Logo'
               width={75}
               height={75}
+              priority
+              unoptimized
             />
             Ryan Leach
           </div>
